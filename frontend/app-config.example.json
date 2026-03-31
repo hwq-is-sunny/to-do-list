@@ -1,0 +1,7 @@
+{
+  "llm_provider": "openai_compatible",
+  "llm_base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+  "llm_api_key": "YOUR_API_KEY_HERE",
+  "llm_model": "gemini-2.0-flash"
+}
+
