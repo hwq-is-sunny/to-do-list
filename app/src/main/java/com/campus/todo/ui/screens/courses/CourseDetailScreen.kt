@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -36,6 +35,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.campus.todo.data.db.entity.TimetableSlot
 import com.campus.todo.ui.AppViewModelFactory
+import com.campus.todo.ui.components.SectionHeader
+import com.campus.todo.ui.components.SoftCard
 import com.campus.todo.util.MinuteParse
 import com.campus.todo.util.TimeUtils
 
@@ -64,7 +65,7 @@ fun CourseDetailScreen(
                     TextButton(onClick = onBack) { Text("返回") }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
@@ -88,7 +89,7 @@ fun CourseDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                Text("课表节次", style = MaterialTheme.typography.titleMedium)
+                SectionHeader("课表节次")
             }
             if (d.slots.isEmpty()) {
                 item {
@@ -104,7 +105,7 @@ fun CourseDetailScreen(
             }
 
             item {
-                Text("进行中的待办", style = MaterialTheme.typography.titleMedium)
+                SectionHeader("进行中的待办")
             }
             if (d.tasks.isEmpty()) {
                 item {
@@ -115,8 +116,8 @@ fun CourseDetailScreen(
                 }
             } else {
                 items(d.tasks, key = { it.id }) { t ->
-                    Card {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    SoftCard {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(t.title, style = MaterialTheme.typography.titleSmall)
                             t.dueAtEpoch?.let {
                                 Text("截止 ${TimeUtils.formatEpoch(it)}", style = MaterialTheme.typography.bodySmall)
@@ -180,7 +181,7 @@ fun CourseDetailScreen(
 
 @Composable
 private fun SlotRow(slot: TimetableSlot, onDelete: () -> Unit) {
-    Card {
+    SoftCard {
         ListItem(
             headlineContent = {
                 Text(

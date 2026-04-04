@@ -10,11 +10,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -33,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.campus.todo.ui.AppViewModelFactory
+import com.campus.todo.ui.components.SectionHeader
+import com.campus.todo.ui.components.SoftCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +51,7 @@ fun CourseListScreen(
             TopAppBar(
                 title = { Text("课程") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
@@ -69,16 +69,13 @@ fun CourseListScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            item { SectionHeader("课程列表", "按课程聚合任务与课表") }
             items(courses, key = { it.id }) { c ->
-                Card(
-                    modifier = Modifier.clickable { onCourseClick(c.id) }
-                ) {
-                    ListItem(
-                        headlineContent = { Text(c.name) },
-                        supportingContent = {
-                            c.code?.let { Text(it) }
-                        }
-                    )
+                SoftCard(modifier = Modifier.clickable { onCourseClick(c.id) }) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(c.name, style = MaterialTheme.typography.titleSmall)
+                        c.code?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    }
                 }
             }
         }

@@ -20,7 +20,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,6 +34,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.campus.todo.data.db.entity.Task
 import com.campus.todo.ui.AppViewModelFactory
+import com.campus.todo.ui.components.DeepCard
+import com.campus.todo.ui.components.SectionHeader
+import com.campus.todo.ui.components.SoftCard
 import com.campus.todo.util.MinuteParse
 import com.campus.todo.util.TimeUtils
 import java.time.format.DateTimeFormatter
@@ -52,7 +54,7 @@ fun CalendarScreen(
             TopAppBar(
                 title = { Text("日历 · 周视图") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 actions = {
@@ -71,6 +73,9 @@ fun CalendarScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            DeepCard(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
+                Text("你的训练天数 → 这里替换为校园周视图", style = MaterialTheme.typography.bodyMedium)
+            }
             Row(
                 Modifier
                     .horizontalScroll(rememberScrollState())
@@ -97,42 +102,35 @@ fun CalendarScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 item {
-                    Text("课表", style = MaterialTheme.typography.titleMedium)
+                    SectionHeader("课表")
                 }
                 if (selectedCell.slots.isEmpty()) {
                     item {
-                        Text(
-                            "这一天没有课表节次。",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        SoftCard { Text("这一天没有课表节次。", color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     }
                 } else {
                     items(selectedCell.slots, key = { it.id }) { slot ->
                         val name = state.coursesById[slot.courseId]?.name ?: "课程"
-                        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                            ListItem(
-                                headlineContent = { Text(name) },
-                                supportingContent = {
-                                    Text(
-                                        "${MinuteParse.formatMinuteOfDay(slot.startMinuteOfDay)}–${
-                                            MinuteParse.formatMinuteOfDay(slot.endMinuteOfDay)
-                                        }  ${slot.location ?: ""}"
-                                    )
-                                }
-                            )
+                        SoftCard {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(name, style = MaterialTheme.typography.titleSmall)
+                                Text(
+                                    "${MinuteParse.formatMinuteOfDay(slot.startMinuteOfDay)}–${
+                                        MinuteParse.formatMinuteOfDay(slot.endMinuteOfDay)
+                                    }  ${slot.location ?: ""}",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
 
                 item {
-                    Text("有截止时间的待办", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+                    SectionHeader("有截止时间的待办")
                 }
                 if (selectedCell.tasks.isEmpty()) {
                     item {
-                        Text(
-                            "这天没有待办截止。",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        SoftCard { Text("这天没有待办截止。", color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     }
                 } else {
                     items(selectedCell.tasks, key = { it.id }) { t ->
@@ -146,8 +144,8 @@ fun CalendarScreen(
 
 @Composable
 private fun TaskCardWeek(t: Task, course: String?) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    SoftCard(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(t.title, style = MaterialTheme.typography.titleSmall)
             val due = t.dueAtEpoch?.let { TimeUtils.formatEpoch(it) } ?: "无截止"
             Text(

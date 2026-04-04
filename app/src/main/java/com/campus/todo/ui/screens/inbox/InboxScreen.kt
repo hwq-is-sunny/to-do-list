@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -27,6 +26,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.campus.todo.data.db.entity.CandidateItem
 import com.campus.todo.ui.AppViewModelFactory
+import com.campus.todo.ui.components.SectionHeader
+import com.campus.todo.ui.components.SoftCard
 import com.campus.todo.util.TimeUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,7 +44,7 @@ fun InboxScreen(
             TopAppBar(
                 title = { Text("候选箱") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
@@ -62,18 +63,11 @@ fun InboxScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item {
-                Text(
-                    "这里的条目需要先确认，才会进入正式待办并安排提醒。",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                SectionHeader("待确认事项", "先确认，再进入正式待办并安排提醒")
             }
             if (list.isEmpty()) {
                 item {
-                    Text(
-                        "暂无候选。可从「今日」或此处手动导入一段通知文本。",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    SoftCard { Text("暂无候选。可从「今日」或此处手动导入一段通知文本。", color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             } else {
                 items(list, key = { it.id }) { c ->
@@ -86,8 +80,8 @@ fun InboxScreen(
 
 @Composable
 private fun CandidateRow(c: CandidateItem, modifier: Modifier = Modifier) {
-    Card(modifier = modifier) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    SoftCard(modifier = modifier) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(c.parsedTitle ?: c.rawText.take(60), style = MaterialTheme.typography.titleSmall)
             Text(
                 "来源: ${sourceLabel(c.sourceKind)}",

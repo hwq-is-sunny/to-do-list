@@ -22,6 +22,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.campus.todo.ui.AppViewModelFactory
+import com.campus.todo.ui.components.DeepCard
+import com.campus.todo.ui.components.SectionHeader
+import com.campus.todo.ui.components.SoftCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +39,7 @@ fun SettingsScreen(
             TopAppBar(
                 title = { Text("设置") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
@@ -50,20 +53,21 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.Start
         ) {
-            Text(
-                "提醒会按普通 / 重要 / 紧急对应不同通知强度，没有完成率或排行。",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            DeepCard {
+                Text("简洁、低焦虑：只做普通/重要/紧急提醒，不做完成率和排行。")
+            }
+            SectionHeader("通知权限")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 val granted = ContextCompat.checkSelfPermission(
                     context,
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-                Text(
-                    if (granted) "通知权限已开启" else "需要通知权限才能提醒你临近截止的事项",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                SoftCard {
+                    Text(
+                        if (granted) "通知权限已开启" else "需要通知权限才能提醒你临近截止的事项",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
                 if (!granted) {
                     Button(onClick = {
                         launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -72,17 +76,22 @@ fun SettingsScreen(
                     }
                 }
             } else {
+                SoftCard {
+                    Text(
+                        "当前系统版本会自动展示提醒通知。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            SectionHeader("数据")
+            SoftCard {
                 Text(
-                    "当前系统版本会自动展示提醒通知。",
+                    "数据仅存本机，未接教务与 IM 真实接口。",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Text(
-                "数据仅存本机，未接教务与 IM 真实接口。",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

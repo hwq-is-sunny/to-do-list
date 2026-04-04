@@ -1,6 +1,7 @@
 package com.campus.todo.ui.navigation
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Home
@@ -19,7 +20,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -75,7 +78,13 @@ fun CampusTodoNavHost(
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
+                NavigationBar(
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                        .clip(RoundedCornerShape(22.dp)),
+                    tonalElevation = 0.dp,
+                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface
+                ) {
                     NavigationBarItem(
                         selected = route == NavRoutes.TODAY,
                         onClick = {
