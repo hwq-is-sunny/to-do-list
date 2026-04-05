@@ -3,6 +3,7 @@ package com.campus.todo.ui.screens.today
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -10,6 +11,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddCircle
+import androidx.compose.material.icons.outlined.Inbox
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,6 +42,7 @@ import com.campus.todo.util.TimeUtils
 @Composable
 fun TodayScreen(
     factory: AppViewModelFactory,
+    onOpenInbox: () -> Unit,
     onOpenAddCandidate: () -> Unit,
     vm: TodayViewModel = viewModel(factory = factory)
 ) {
@@ -138,6 +142,27 @@ fun TodayScreen(
 
             item {
                 SectionHeader("候选箱", "先确认，再进入正式待办")
+            }
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AssistChip(
+                        onClick = onOpenInbox,
+                        label = { Text("打开候选箱") },
+                        leadingIcon = {
+                            Icon(Icons.Outlined.Inbox, contentDescription = null)
+                        },
+                    )
+                    AssistChip(
+                        onClick = onOpenAddCandidate,
+                        label = { Text("新建候选") },
+                        leadingIcon = {
+                            Icon(Icons.Outlined.AddCircle, contentDescription = null)
+                        }
+                    )
+                }
             }
             item {
                 Card(

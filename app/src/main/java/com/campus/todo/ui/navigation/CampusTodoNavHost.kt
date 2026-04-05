@@ -1,5 +1,7 @@
 package com.campus.todo.ui.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -8,6 +10,7 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -19,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -35,6 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.campus.todo.CampusTodoApp
 import com.campus.todo.MainActivity
 import com.campus.todo.ui.AppViewModelFactory
+import com.campus.todo.ui.screens.auth.LoginScreen
 import com.campus.todo.ui.screens.calendar.CalendarScreen
 import com.campus.todo.ui.screens.courses.CourseDetailScreen
 import com.campus.todo.ui.screens.courses.CourseListScreen
@@ -55,8 +60,23 @@ fun CampusTodoNavHost(
         AppViewModelFactory(activity, activity.intent.extras, app)
     }
 
+    var initialStart by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) {
+        initialStart = if (app.sessionStore.isLoggedIn()) NavRoutes.TODAY else NavRoutes.LOGIN
+    }
+
+    if (initialStart == null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val startDest = initialStart!!
+
     var pendingOpenCandidate by remember { mutableStateOf(openCandidateId) }
-    LaunchedEffect(pendingOpenCandidate) {
+    LaunchedEffect(pendingOpenCandidate, startDest) {
+        if (startDest != NavRoutes.TODAY) return@LaunchedEffect
         val id = pendingOpenCandidate ?: return@LaunchedEffect
         navController.navigate(NavRoutes.candidate(id)) {
             launchSingleTop = true
@@ -151,12 +171,29 @@ fun CampusTodoNavHost(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.TODAY,
+            startDestination = startDest,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(NavRoutes.LOGIN) {
+                LoginScreen(
+                    factory = activityFactory,
+                    onLoggedIn = {
+                        navController.navigate(NavRoutes.TODAY) {
+                            popUpTo(NavRoutes.LOGIN) { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable(NavRoutes.TODAY) {
                 TodayScreen(
                     factory = activityFactory,
+                    onOpenInbox = {
+                        navController.navigate(NavRoutes.INBOX) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                     onOpenAddCandidate = { navController.navigate(NavRoutes.ADD_CANDIDATE) }
                 )
             }
@@ -177,7 +214,14 @@ fun CampusTodoNavHost(
                 )
             }
             composable(NavRoutes.SETTINGS) {
-                SettingsScreen(factory = activityFactory)
+                SettingsScreen(
+                    factory = activityFactory,
+                    onLogout = {
+                        navController.navigate(NavRoutes.LOGIN) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable(NavRoutes.ADD_CANDIDATE) {
                 AddCandidateScreen(
@@ -212,6 +256,7 @@ fun CampusTodoNavHost(
                 CourseDetailScreen(
                     factory = entryFactory,
                     onBack = { navController.popBackStack() },
+                    onCourseDeleted = { navController.popBackStack() },
                     vm = viewModel(entry, factory = entryFactory)
                 )
             }

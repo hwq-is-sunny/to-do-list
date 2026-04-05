@@ -29,6 +29,20 @@ class TodoRepository(private val db: AppDatabase) {
         return id
     }
 
+    suspend fun updateCourse(id: Long, name: String, code: String?) {
+        val c = courses.getById(id) ?: return
+        courses.update(
+            c.copy(
+                name = name.trim(),
+                code = code?.trim()?.ifEmpty { null }
+            )
+        )
+    }
+
+    suspend fun deleteCourse(id: Long) {
+        courses.deleteById(id)
+    }
+
     fun observeTimetable(): Flow<List<TimetableSlot>> = slots.observeAll()
     fun observeTimetableForCourse(courseId: Long): Flow<List<TimetableSlot>> =
         slots.observeForCourse(courseId)

@@ -1,6 +1,7 @@
 package com.campus.todo.ui.navigation
 
 object NavRoutes {
+    const val LOGIN = "login"
     const val TODAY = "today"
     const val CALENDAR = "calendar"
     const val COURSES = "courses"

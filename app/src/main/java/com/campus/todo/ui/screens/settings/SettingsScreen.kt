@@ -7,20 +7,25 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.campus.todo.ui.AppViewModelFactory
 import com.campus.todo.ui.components.DeepCard
 import com.campus.todo.ui.components.SectionHeader
@@ -29,10 +34,13 @@ import com.campus.todo.ui.components.SoftCard
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    @Suppress("UNUSED_PARAMETER") factory: AppViewModelFactory
+    factory: AppViewModelFactory,
+    onLogout: () -> Unit,
+    vm: SettingsViewModel = viewModel(factory = factory)
 ) {
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    val username by vm.username.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -55,6 +63,19 @@ fun SettingsScreen(
         ) {
             DeepCard {
                 Text("简洁、低焦虑：只做普通/重要/紧急提醒，不做完成率和排行。")
+            }
+            SectionHeader("账号")
+            SoftCard {
+                Text(
+                    if (username.isNotBlank()) "当前用户：$username" else "未登录",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            OutlinedButton(
+                onClick = { vm.logout(onLogout) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("退出登录")
             }
             SectionHeader("通知权限")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

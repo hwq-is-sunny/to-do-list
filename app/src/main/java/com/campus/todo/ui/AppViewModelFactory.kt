@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.savedstate.SavedStateRegistryOwner
 import com.campus.todo.CampusTodoApp
+import com.campus.todo.ui.screens.auth.LoginViewModel
 import com.campus.todo.ui.screens.calendar.CalendarViewModel
 import com.campus.todo.ui.screens.courses.CourseDetailViewModel
 import com.campus.todo.ui.screens.courses.CourseListViewModel
@@ -42,9 +43,11 @@ class AppViewModelFactory(
             modelClass.isAssignableFrom(CandidateDetailViewModel::class.java) ->
                 CandidateDetailViewModel(repo, sched, handle) as T
             modelClass.isAssignableFrom(AddCandidateViewModel::class.java) ->
-                AddCandidateViewModel(repo) as T
+                AddCandidateViewModel(repo, app.deepSeekAssist) as T
             modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
-                SettingsViewModel() as T
+                SettingsViewModel(app.sessionStore) as T
+            modelClass.isAssignableFrom(LoginViewModel::class.java) ->
+                LoginViewModel(app.sessionStore) as T
             else -> throw IllegalArgumentException("Unknown VM ${modelClass.name}")
         }
     }

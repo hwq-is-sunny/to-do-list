@@ -73,4 +73,19 @@ class CourseDetailViewModel(
             scheduler.cancelTask(taskId)
         }
     }
+
+    fun updateCourse(name: String, code: String?, onDone: () -> Unit) {
+        viewModelScope.launch {
+            repo.updateCourse(courseId, name, code)
+            courseFlow.value = repo.getCourse(courseId)
+            onDone()
+        }
+    }
+
+    fun deleteCourse(onDone: () -> Unit) {
+        viewModelScope.launch {
+            repo.deleteCourse(courseId)
+            onDone()
+        }
+    }
 }

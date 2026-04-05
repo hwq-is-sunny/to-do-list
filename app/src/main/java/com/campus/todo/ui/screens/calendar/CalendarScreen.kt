@@ -1,6 +1,5 @@
 package com.campus.todo.ui.screens.calendar
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,9 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
@@ -26,7 +26,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -39,6 +42,7 @@ import com.campus.todo.ui.components.SectionHeader
 import com.campus.todo.ui.components.SoftCard
 import com.campus.todo.util.MinuteParse
 import com.campus.todo.util.TimeUtils
+import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,6 +53,31 @@ fun CalendarScreen(
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     val df = DateTimeFormatter.ofPattern("M/d E")
+    val pagerState = rememberPagerState(
+        initialPage = state.weekPage.coerceIn(0, CalendarViewModel.WEEK_PAGE_COUNT - 1),
+        pageCount = { CalendarViewModel.WEEK_PAGE_COUNT }
+    )
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(state.weekPage) {
+        if (pagerState.currentPage != state.weekPage) {
+            pagerState.animateScrollToPage(state.weekPage.coerceIn(0, CalendarViewModel.WEEK_PAGE_COUNT - 1))
+        }
+    }
+
+    LaunchedEffect(pagerState) {
+        var first = true
+        snapshotFlow { pagerState.settledPage }.collect { page ->
+            if (first) {
+                first = false
+                return@collect
+            }
+            if (page != state.weekPage) {
+                vm.setWeekPage(page)
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -58,10 +87,24 @@ fun CalendarScreen(
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 actions = {
-                    IconButton(onClick = { vm.shiftWeek(-1) }) {
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                pagerState.animateScrollToPage((pagerState.currentPage - 1).coerceAtLeast(0))
+                            }
+                        }
+                    ) {
                         Icon(Icons.Default.ChevronLeft, "上一周")
                     }
-                    IconButton(onClick = { vm.shiftWeek(1) }) {
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                pagerState.animateScrollToPage(
+                                    (pagerState.currentPage + 1).coerceAtMost(CalendarViewModel.WEEK_PAGE_COUNT - 1)
+                                )
+                            }
+                        }
+                    ) {
                         Icon(Icons.Default.ChevronRight, "下一周")
                     }
                 }
@@ -74,22 +117,29 @@ fun CalendarScreen(
                 .padding(padding)
         ) {
             DeepCard(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
-                Text("你的训练天数 → 这里替换为校园周视图", style = MaterialTheme.typography.bodyMedium)
+                Text("左右滑动日期条可快速切换周；也可点右上角箭头。", style = MaterialTheme.typography.bodyMedium)
             }
-            Row(
-                Modifier
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
-            ) {
-                state.days.forEach { cell ->
-                    val selected = cell.date == state.selected
-                    FilterChip(
-                        selected = selected,
-                        onClick = { vm.selectDate(cell.date) },
-                        label = { Text(df.format(cell.date)) }
-                    )
+            ) { page ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val mon = CalendarViewModel.mondayForPage(page)
+                    for (i in 0..6) {
+                        val date = mon.plusDays(i.toLong())
+                        FilterChip(
+                            selected = date == state.selected,
+                            onClick = { vm.selectDate(date) },
+                            label = { Text(df.format(date)) }
+                        )
+                    }
                 }
             }
 

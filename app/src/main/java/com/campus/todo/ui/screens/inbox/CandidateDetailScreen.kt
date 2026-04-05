@@ -120,6 +120,11 @@ fun CandidateDetailScreen(
                 TextButton(onClick = { hasDue = false }) { Text("清除截止") }
             }
 
+            Text(
+                "保存草稿后，若设置了截止日期，会在临近时提醒你「确认并加入正式待办」；正式提醒仍以确认后的待办为准。",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Button(
                 onClick = {
                     vm.updateDraft(

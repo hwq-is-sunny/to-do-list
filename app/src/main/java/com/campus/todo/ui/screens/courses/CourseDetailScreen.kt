@@ -10,10 +10,14 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -47,6 +51,7 @@ private val DAY_LABELS = listOf("周一", "周二", "周三", "周四", "周五"
 fun CourseDetailScreen(
     factory: AppViewModelFactory,
     onBack: () -> Unit,
+    onCourseDeleted: () -> Unit,
     vm: CourseDetailViewModel = viewModel(factory = factory)
 ) {
     val detail by vm.detail.collectAsStateWithLifecycle()
@@ -56,6 +61,13 @@ fun CourseDetailScreen(
     var endText by remember { mutableStateOf("09:40") }
     var loc by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
+    var slotError by remember { mutableStateOf<String?>(null) }
+
+    var menuOpen by remember { mutableStateOf(false) }
+    var showEditCourse by remember { mutableStateOf(false) }
+    var showDeleteCourse by remember { mutableStateOf(false) }
+    var editName by remember { mutableStateOf("") }
+    var editCode by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -64,6 +76,29 @@ fun CourseDetailScreen(
                 navigationIcon = {
                     TextButton(onClick = onBack) { Text("返回") }
                 },
+                actions = {
+                    IconButton(onClick = { menuOpen = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "更多")
+                    }
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        DropdownMenuItem(
+                            text = { Text("修改课程名称") },
+                            onClick = {
+                                menuOpen = false
+                                editName = detail?.course?.name.orEmpty()
+                                editCode = detail?.course?.code.orEmpty()
+                                showEditCourse = true
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("删除整门课程") },
+                            onClick = {
+                                menuOpen = false
+                                showDeleteCourse = true
+                            }
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
@@ -71,7 +106,10 @@ fun CourseDetailScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showSlot = true }) {
+            FloatingActionButton(onClick = {
+                slotError = null
+                showSlot = true
+            }) {
                 Icon(Icons.Default.Add, contentDescription = "添加上课时间")
             }
         }
@@ -149,31 +187,90 @@ fun CourseDetailScreen(
                             )
                         }
                     }
-                    OutlinedTextField(startText, { startText = it }, label = { Text("开始 HH:mm") }, singleLine = true)
-                    OutlinedTextField(endText, { endText = it }, label = { Text("结束 HH:mm") }, singleLine = true)
+                    OutlinedTextField(startText, { startText = it; slotError = null }, label = { Text("开始 HH:mm") }, singleLine = true)
+                    OutlinedTextField(endText, { endText = it; slotError = null }, label = { Text("结束 HH:mm") }, singleLine = true)
                     OutlinedTextField(loc, { loc = it }, label = { Text("教室（可选）") }, singleLine = true)
                     OutlinedTextField(note, { note = it }, label = { Text("备注（可选）") }, singleLine = true)
+                    slotError?.let {
+                        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val sm = MinuteParse.parseMinuteOfDay(startText)
-                        val em = MinuteParse.parseMinuteOfDay(endText)
-                        if (sm != null && em != null && em > sm) {
-                            vm.addSlot(
-                                dayOfWeek = dayIndex + 1,
-                                startMin = sm,
-                                endMin = em,
-                                location = loc.ifBlank { null },
-                                note = note.ifBlank { null }
-                            ) { showSlot = false }
+                        val err = MinuteParse.timeRangeValidationError(startText, endText)
+                        if (err != null) {
+                            slotError = err
+                            return@TextButton
+                        }
+                        val sm = MinuteParse.parseMinuteOfDay(startText)!!
+                        val em = MinuteParse.parseMinuteOfDay(endText)!!
+                        vm.addSlot(
+                            dayOfWeek = dayIndex + 1,
+                            startMin = sm,
+                            endMin = em,
+                            location = loc.ifBlank { null },
+                            note = note.ifBlank { null }
+                        ) {
+                            showSlot = false
+                            slotError = null
                         }
                     }
                 ) { Text("保存") }
             },
             dismissButton = {
                 TextButton(onClick = { showSlot = false }) { Text("取消") }
+            }
+        )
+    }
+
+    if (showEditCourse) {
+        AlertDialog(
+            onDismissRequest = { showEditCourse = false },
+            title = { Text("修改课程") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(editName, { editName = it }, label = { Text("课程名") }, singleLine = true)
+                    OutlinedTextField(editCode, { editCode = it }, label = { Text("课号（可选）") }, singleLine = true)
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (editName.isNotBlank()) {
+                            vm.updateCourse(editName, editCode.ifBlank { null }) {
+                                showEditCourse = false
+                            }
+                        }
+                    }
+                ) { Text("保存") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditCourse = false }) { Text("取消") }
+            }
+        )
+    }
+
+    if (showDeleteCourse) {
+        AlertDialog(
+            onDismissRequest = { showDeleteCourse = false },
+            title = { Text("删除课程") },
+            text = {
+                Text("将删除本课程及所有课表节次；关联待办会保留，但不再关联到本课程。确定吗？")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        vm.deleteCourse {
+                            showDeleteCourse = false
+                            onCourseDeleted()
+                        }
+                    }
+                ) { Text("删除", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteCourse = false }) { Text("取消") }
             }
         )
     }

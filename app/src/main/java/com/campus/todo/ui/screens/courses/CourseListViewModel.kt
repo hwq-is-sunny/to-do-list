@@ -20,4 +20,18 @@ class CourseListViewModel(
             onCreated(id)
         }
     }
+
+    fun updateCourse(id: Long, name: String, code: String?, onDone: () -> Unit) {
+        viewModelScope.launch {
+            repo.updateCourse(id, name, code)
+            onDone()
+        }
+    }
+
+    fun deleteCourse(id: Long, onDone: () -> Unit) {
+        viewModelScope.launch {
+            repo.deleteCourse(id)
+            onDone()
+        }
+    }
 }

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.campus.todo.data.db.entity.CandidateItem
+import com.campus.todo.data.db.entity.CandidateStatus
 import com.campus.todo.data.db.entity.Course
 import com.campus.todo.data.db.entity.TaskType
 import com.campus.todo.data.db.entity.UrgencyLevel
@@ -62,12 +63,20 @@ class CandidateDetailViewModel(
                 )
             )
             refresh()
+            val updated = itemFlow.value
+            val due = updated?.parsedDueAtEpoch
+            if (updated != null && updated.status == CandidateStatus.NEW && due != null) {
+                scheduler.scheduleDraftReminder(candidateId, due)
+            } else {
+                scheduler.cancelDraftReminder(candidateId)
+            }
             onSaved()
         }
     }
 
     fun ignore(onDone: () -> Unit) {
         viewModelScope.launch {
+            scheduler.cancelDraftReminder(candidateId)
             repo.ignoreCandidate(candidateId)
             onDone()
         }
@@ -83,6 +92,7 @@ class CandidateDetailViewModel(
     ) {
         viewModelScope.launch {
             val c = itemFlow.value ?: return@launch
+            scheduler.cancelDraftReminder(candidateId)
             val taskId = repo.confirmCandidate(c, title, courseId, dueAtEpoch, taskType, urgency)
             val task = repo.getTask(taskId) ?: return@launch
             scheduler.rescheduleTask(task)

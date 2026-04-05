@@ -41,8 +41,40 @@ class TaskReminderScheduler(private val context: Context) {
         WorkManager.getInstance(context).cancelUniqueWork(uniqueName(taskId))
     }
 
+    /** Remind user that draft candidates do not trigger formal task reminders until confirmed. */
+    fun scheduleDraftReminder(candidateId: Long, dueEpoch: Long) {
+        cancelDraftReminder(candidateId)
+        val leadMs = Duration.ofHours(24).toMillis()
+        var fireAt = dueEpoch - leadMs
+        val now = System.currentTimeMillis()
+        if (fireAt <= now) {
+            fireAt = now + MIN_DELAY_MS
+        }
+        if (fireAt >= dueEpoch) {
+            fireAt = (dueEpoch - MIN_DELAY_MS).coerceAtLeast(now + MIN_DELAY_MS)
+        }
+        val delay = fireAt - now
+        val data = Data.Builder()
+            .putLong(CandidateDraftReminderWorker.KEY_CANDIDATE_ID, candidateId)
+            .build()
+        val request = OneTimeWorkRequestBuilder<CandidateDraftReminderWorker>()
+            .setInitialDelay(Duration.ofMillis(delay))
+            .setInputData(data)
+            .build()
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            draftUniqueName(candidateId),
+            ExistingWorkPolicy.REPLACE,
+            request
+        )
+    }
+
+    fun cancelDraftReminder(candidateId: Long) {
+        WorkManager.getInstance(context).cancelUniqueWork(draftUniqueName(candidateId))
+    }
+
     companion object {
         private const val MIN_DELAY_MS = 15_000L
         fun uniqueName(taskId: Long) = "task_reminder_$taskId"
+        fun draftUniqueName(candidateId: Long) = "candidate_draft_reminder_$candidateId"
     }
 }
