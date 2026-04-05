@@ -20,14 +20,30 @@ class TodoRepository(private val db: AppDatabase) {
     private val tasks = db.taskDao()
     private val candidates = db.candidateDao()
 
+    // ==================== Course Operations ====================
+
     fun observeCourses(): Flow<List<Course>> = courses.observeAll()
     suspend fun getCourse(id: Long): Course? = courses.getById(id)
+    suspend fun getAllCourses(): List<Course> = courses.getAll()
+    suspend fun searchCourses(query: String): List<Course> = courses.search(query)
+    suspend fun getCourseCount(): Int = courses.count()
+
     suspend fun insertCourse(name: String, code: String?): Long {
         val id = courses.insert(
             Course(name = name.trim(), code = code?.trim()?.ifEmpty { null })
         )
         return id
     }
+
+    suspend fun updateCourse(course: Course) {
+        courses.update(course)
+    }
+
+    suspend fun deleteCourse(id: Long) {
+        courses.deleteById(id)
+    }
+
+    // ==================== Timetable Operations ====================
 
     fun observeTimetable(): Flow<List<TimetableSlot>> = slots.observeAll()
     fun observeTimetableForCourse(courseId: Long): Flow<List<TimetableSlot>> =
@@ -55,23 +71,71 @@ class TodoRepository(private val db: AppDatabase) {
 
     suspend fun deleteSlot(id: Long) = slots.deleteById(id)
 
+    // ==================== Task Operations ====================
+
     fun observePendingTasks(): Flow<List<Task>> = tasks.observeAllPending()
     fun observePendingForCourse(courseId: Long): Flow<List<Task>> =
         tasks.observePendingForCourse(courseId)
 
     suspend fun getTask(id: Long): Task? = tasks.getById(id)
+    suspend fun getTasksByIds(ids: List<Long>): List<Task> = tasks.getByIds(ids)
 
     suspend fun getAllPendingWithDue(): List<Task> = tasks.getAllPendingWithDue()
+    suspend fun getTasksDueBetween(start: Long, end: Long): List<Task> =
+        tasks.pendingDueBetween(start, end)
+
+    suspend fun getTaskCountByStatus(status: TaskStatus): Int = tasks.countByStatus(status)
+    suspend fun getPendingTaskCountByCourse(courseId: Long): Int = tasks.countPendingByCourse(courseId)
+
+    suspend fun insertTask(task: Task): Long = tasks.insert(task)
+
+    suspend fun insertTasks(tasksToInsert: List<Task>): List<Long> = tasks.insertAll(tasksToInsert)
 
     suspend fun markTaskDone(id: Long) {
         val now = Instant.now().toEpochMilli()
         tasks.updateStatus(id, TaskStatus.DONE, now, now)
     }
 
+    suspend fun markTasksDone(ids: List<Long>) {
+        if (ids.isEmpty()) return
+        val now = Instant.now().toEpochMilli()
+        tasks.updateStatusBatch(ids, TaskStatus.DONE, now, now)
+    }
+
+    suspend fun markTaskPending(id: Long) {
+        val now = Instant.now().toEpochMilli()
+        tasks.updateStatus(id, TaskStatus.PENDING, now, null)
+    }
+
+    suspend fun deleteTask(id: Long) {
+        tasks.deleteByIds(listOf(id))
+    }
+
+    suspend fun deleteTasks(ids: List<Long>) {
+        if (ids.isEmpty()) return
+        tasks.deleteByIds(ids)
+    }
+
+    suspend fun archiveTask(id: Long) {
+        val now = Instant.now().toEpochMilli()
+        tasks.updateStatus(id, TaskStatus.ARCHIVED, now, now)
+    }
+
+    // ==================== Candidate Operations ====================
+
     fun observeNewCandidates(): Flow<List<CandidateItem>> =
         candidates.observeByStatus(CandidateStatus.NEW)
 
     suspend fun getCandidate(id: Long): CandidateItem? = candidates.getById(id)
+
+    suspend fun getCandidatesByStatusPaginated(
+        status: CandidateStatus,
+        limit: Int,
+        offset: Int
+    ): List<CandidateItem> = candidates.getByStatusPaginated(status, limit, offset)
+
+    suspend fun getCandidateCountByStatus(status: CandidateStatus): Int =
+        candidates.countByStatus(status)
 
     suspend fun ingestRawText(raw: String, source: SourceKind): Long {
         val parsed = SimpleCandidateParser.parse(raw, source)
@@ -95,9 +159,26 @@ class TodoRepository(private val db: AppDatabase) {
         candidates.update(item)
     }
 
+    suspend fun updateCandidates(items: List<CandidateItem>) {
+        candidates.updateAll(items)
+    }
+
     suspend fun ignoreCandidate(id: Long) {
         val c = candidates.getById(id) ?: return
         candidates.update(c.copy(status = CandidateStatus.IGNORED))
+    }
+
+    suspend fun ignoreCandidates(ids: List<Long>) {
+        val items = ids.mapNotNull { candidates.getById(it) }
+        candidates.updateAll(items.map { it.copy(status = CandidateStatus.IGNORED) })
+    }
+
+    suspend fun deleteCandidate(id: Long) {
+        candidates.deleteById(id)
+    }
+
+    suspend fun deleteCandidates(ids: List<Long>) {
+        candidates.deleteByIds(ids)
     }
 
     suspend fun confirmCandidate(

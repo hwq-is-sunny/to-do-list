@@ -3,7 +3,10 @@ package com.campus.todo.data.db.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "candidates")
+@Entity(
+    tableName = "candidates",
+    indices = [Index("status"), Index("createdAtEpoch")]
+)
 data class CandidateItem(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val rawText: String,

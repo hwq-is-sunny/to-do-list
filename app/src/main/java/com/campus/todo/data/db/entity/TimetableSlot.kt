@@ -15,7 +15,7 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("courseId")]
+    indices = [Index("courseId"), Index("dayOfWeek"), Index("dayOfWeek", "startMinuteOfDay")]
 )
 data class TimetableSlot(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
