@@ -92,7 +92,7 @@ fun SettingsScreen(
     // Check battery optimization
     val batteryOptimizationEnabled = remember {
         val powerManager = context.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager
-        !powerManager.isIgnoringBatteryOptimizations(context.packageName)
+        powerManager.isIgnoringBatteryOptimizations(context.packageName).not()
     }
 
     Scaffold(
@@ -158,17 +158,21 @@ fun SettingsScreen(
                     title = "通知权限",
                     subtitle = if (notificationGranted) "已开启" else "需要权限才能提醒",
                     trailing = if (notificationGranted) {
-                        Icon(
-                            Icons.Default.Check,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        {
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     } else {
-                        Text(
-                            "开启",
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.labelMedium
-                        )
+                        {
+                            Text(
+                                "开启",
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
                     },
                     onClick = {
                         if (!notificationGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -183,11 +187,13 @@ fun SettingsScreen(
                     title = "电池优化",
                     subtitle = if (batteryOptimizationEnabled) "已关闭，可能影响提醒" else "已优化",
                     trailing = if (batteryOptimizationEnabled) {
-                        Text(
-                            "设置",
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.labelMedium
-                        )
+                        {
+                            Text(
+                                "设置",
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
                     } else null,
                     onClick = {
                         if (batteryOptimizationEnabled) {

@@ -123,11 +123,11 @@ object SimpleCandidateParser {
                 return if (tm.find()) {
                     val hh = tm.group(1)!!.toInt().coerceIn(0, 23)
                     val mm = tm.group(2)!!.toInt().coerceIn(0, 59)
-                    LocalDateTime.of(targetDate.year, targetDate.month, targetDate.day, hh, mm)
+                    LocalDateTime.of(targetDate.year, targetDate.month, targetDate.dayOfMonth, hh, mm)
                         .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
                 } else {
                     // Default to end of day
-                    LocalDateTime.of(targetDate.year, targetDate.month, targetDate.day, 23, 59)
+                    LocalDateTime.of(targetDate.year, targetDate.month, targetDate.dayOfMonth, 23, 59)
                         .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
                 }
             }
