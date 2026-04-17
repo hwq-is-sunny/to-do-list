@@ -83,7 +83,7 @@
 
 ## 📂 项目结构
 
-```bash
+
 app/src/main/java/com/campus/todo
 ├── data                 # 数据层（数据库、实体类、DAO、仓库）
 ├── domain               # 业务解析逻辑
@@ -95,7 +95,7 @@ app/src/main/java/com/campus/todo
 ├── MainActivity.kt      # 应用入口
 └── CampusTodoApp.kt     # Application 初始化
 
----
+
 
 ## 🔧 安装与运行
 
@@ -169,18 +169,6 @@ app/src/main/java/com/campus/todo
 - 深色背景风格
 - 圆角卡片式布局
 - 偏年轻化、轻量化、现代化的视觉表达
-
----
-
-## 📷 项目截图
-
-项目中包含部分页面截图，可放在 `ui-screens/` 目录中展示。  
-如果你后续把截图文件名改成英文，README 中可以这样插入：
-
-    ![Today](ui-screens/today.jpg)
-    ![Calendar](ui-screens/calendar.jpg)
-    ![Courses](ui-screens/courses.jpg)
-    ![Settings](ui-screens/settings.jpg)
 
 ---
 
