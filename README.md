@@ -94,3 +94,103 @@ app/src/main/java/com/campus/todo
 ├── util                 # 工具类
 ├── MainActivity.kt      # 应用入口
 └── CampusTodoApp.kt     # Application 初始化
+
+## 🔧 安装与运行
+
+### 1. 克隆项目
+
+    git clone https://github.com/你的用户名/你的仓库名.git
+    cd 你的仓库名
+
+### 2. 使用 Android Studio 打开项目
+
+打开 **Android Studio**，选择 **Open**，然后打开当前项目根目录。  
+等待 **Gradle** 同步完成。
+
+### 3. 配置 AI Key（可选）
+
+如果你需要测试 AI 解析功能，请在项目根目录下的 `local.properties` 文件中添加：
+
+    DEEPSEEK_API_KEY=你的密钥
+
+如果不使用 AI 功能，这一步可以跳过。
+
+### 4. 配置运行环境
+
+请确保你的开发环境满足以下要求：
+
+- Android Studio 最新稳定版
+- JDK 17
+- Android SDK 35
+- 最低支持版本：Android 8.0（API 26）
+
+### 5. 运行项目
+
+连接安卓真机或启动模拟器后，点击 Android Studio 顶部的 **Run** 按钮即可启动项目。
+
+### 6. 打包 APK（可选）
+
+如果你想生成安装包，可以在 Android Studio 中选择：
+
+- `Build > Build APK(s)`
+
+生成完成后即可在输出目录中找到 APK 文件。
+
+---
+
+## 📌 当前实现情况
+
+### 已实现
+- [x] Jetpack Compose 页面搭建
+- [x] 本地数据库存储
+- [x] 今日待办展示
+- [x] 日历任务查看
+- [x] 课程管理
+- [x] 候选箱导入与确认
+- [x] 提醒通知基础能力
+- [x] 设置页基础功能
+
+### 可继续优化
+- [ ] 完整登录注册逻辑
+- [ ] 搜索与筛选
+- [ ] 更多任务分类标签
+- [ ] 统计分析功能
+- [ ] 更完整的 AI 智能规划
+- [ ] 番茄专注功能
+
+---
+
+## 🎨 UI 设计风格
+
+本项目整体采用：
+
+- 深色背景风格
+- 圆角卡片式布局
+- 偏年轻化、轻量化、现代化的视觉表达
+
+---
+
+## 📷 项目截图
+
+项目中包含部分页面截图，可放在 `ui-screens/` 目录中展示。  
+如果你后续把截图文件名改成英文，README 中可以这样插入：
+
+    ![Today](ui-screens/today.jpg)
+    ![Calendar](ui-screens/calendar.jpg)
+    ![Courses](ui-screens/courses.jpg)
+    ![Settings](ui-screens/settings.jpg)
+
+---
+
+
+## 📄 License
+
+本项目仅用于学习、交流与个人作品展示。  
+
+---
+
+## 🌟 总结
+
+
+
+如果你觉得这个项目不错，欢迎点个 **Star ⭐**    ^^_
