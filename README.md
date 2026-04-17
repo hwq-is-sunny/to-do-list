@@ -95,6 +95,8 @@ app/src/main/java/com/campus/todo
 ├── MainActivity.kt      # 应用入口
 └── CampusTodoApp.kt     # Application 初始化
 
+---
+
 ## 🔧 安装与运行
 
 ### 1. 克隆项目
