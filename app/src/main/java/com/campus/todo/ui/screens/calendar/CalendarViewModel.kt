@@ -12,23 +12,17 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalAdjusters
-
-data class DayCell(
-    val date: LocalDate,
-    val slots: List<TimetableSlot>,
-    val tasks: List<Task>
-)
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 data class CalendarUiState(
-    val weekStart: LocalDate,
-    val weekPage: Int,
-    val days: List<DayCell>,
+    val dateStrip: List<LocalDate>,
+    val selectedDayTasks: List<Task>,
+    val selectedDaySlots: List<TimetableSlot>,
     val coursesById: Map<Long, Course>,
-    val selected: LocalDate
+    val selected: LocalDate,
+    val monthTitle: String
 )
 
 class CalendarViewModel(
@@ -36,20 +30,7 @@ class CalendarViewModel(
 ) : ViewModel() {
 
     private val selected = MutableStateFlow(LocalDate.now())
-
-    companion object {
-        /** Anchor Monday for paging (covers ~40 years in 2000 pages). */
-        private val EPOCH_MONDAY: LocalDate = LocalDate.of(2000, 1, 3)
-        const val WEEK_PAGE_COUNT: Int = 2000
-
-        fun weekPageForDate(d: LocalDate): Int {
-            val mon = d.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-            return ChronoUnit.WEEKS.between(EPOCH_MONDAY, mon).toInt().coerceIn(0, WEEK_PAGE_COUNT - 1)
-        }
-
-        fun mondayForPage(page: Int): LocalDate =
-            EPOCH_MONDAY.plusWeeks(page.toLong().coerceIn(0, WEEK_PAGE_COUNT - 1L))
-    }
+    private val monthFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)
 
     val state = combine(
         selected,
@@ -57,55 +38,50 @@ class CalendarViewModel(
         repo.observeCourses(),
         repo.observePendingTasks()
     ) { sel, slots, courses, tasks ->
-        val start = sel.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-        val page = weekPageForDate(sel)
+        val today = LocalDate.now()
+        val strip = (0L until 7L).map { today.plusDays(it) }
+        val active = if (sel.isBefore(today)) today else sel
+        val normalized = strip.find { it == active } ?: today
         val map = courses.associateBy { it.id }
-        val days = (0L until 7L).map { offset ->
-            val d = start.plusDays(offset)
-            val dow = d.dayOfWeek.value
-            val daySlots = slots.filter { it.dayOfWeek == dow }.sortedBy { it.startMinuteOfDay }
-            val ds = TimeUtils.startOfDayEpoch(d)
-            val de = TimeUtils.endOfDayEpoch(d)
-            val dayTasks = tasks.filter { t ->
-                val due = t.dueAtEpoch
-                due != null && due in ds..de
-            }.sortedBy { it.dueAtEpoch }
-            DayCell(d, daySlots, dayTasks)
-        }
+
+        val selectedSlots = slots
+            .filter { it.dayOfWeek == normalized.dayOfWeek.value }
+            .sortedBy { it.startMinuteOfDay }
+        val dayStart = TimeUtils.startOfDayEpoch(normalized)
+        val dayEnd = TimeUtils.endOfDayEpoch(normalized)
+        val selectedTasks = tasks
+            .filter { dueTask ->
+                val due = dueTask.dueAtEpoch
+                due != null && due in dayStart..dayEnd
+            }
+            .sortedBy { it.dueAtEpoch }
+
         CalendarUiState(
-            weekStart = start,
-            weekPage = page,
-            days = days,
+            dateStrip = strip,
+            selectedDayTasks = selectedTasks,
+            selectedDaySlots = selectedSlots,
             coursesById = map,
-            selected = sel
+            selected = normalized,
+            monthTitle = normalized.format(monthFormatter)
         )
     }.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5_000),
         CalendarUiState(
-            LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
-            weekPageForDate(LocalDate.now()),
+            (0L until 7L).map { LocalDate.now().plusDays(it) },
+            emptyList(),
             emptyList(),
             emptyMap(),
-            LocalDate.now()
+            LocalDate.now(),
+            LocalDate.now().format(monthFormatter)
         )
     )
 
     fun selectDate(d: LocalDate) {
-        selected.update { d }
-    }
-
-    fun shiftWeek(delta: Long) {
-        selected.update { it.plusWeeks(delta) }
-    }
-
-    /** Moves the visible week while keeping the same weekday (Mon=1 … Sun=7). */
-    fun setWeekPage(page: Int) {
-        val p = page.coerceIn(0, WEEK_PAGE_COUNT - 1)
-        selected.update { cur ->
-            val monday = mondayForPage(p)
-            val dow = cur.dayOfWeek.value
-            monday.plusDays((dow - 1).toLong())
+        val today = LocalDate.now()
+        val latest = today.plusDays(6)
+        if (d in today..latest) {
+            selected.update { d }
         }
     }
 }

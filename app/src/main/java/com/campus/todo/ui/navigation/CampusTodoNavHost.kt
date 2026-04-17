@@ -1,21 +1,31 @@
 package com.campus.todo.ui.navigation
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Inbox
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,6 +35,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -62,7 +75,7 @@ fun CampusTodoNavHost(
 
     var initialStart by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
-        initialStart = if (app.sessionStore.isLoggedIn()) NavRoutes.TODAY else NavRoutes.LOGIN
+        initialStart = NavRoutes.TODAY
     }
 
     if (initialStart == null) {
@@ -98,74 +111,17 @@ fun CampusTodoNavHost(
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar(
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp, vertical = 10.dp)
-                        .clip(RoundedCornerShape(22.dp)),
-                    tonalElevation = 0.dp,
-                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface
-                ) {
-                    NavigationBarItem(
-                        selected = route == NavRoutes.TODAY,
-                        onClick = {
-                            navController.navigate(NavRoutes.TODAY) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(Icons.Outlined.Home, contentDescription = null) },
-                        label = { Text("今日") }
-                    )
-                    NavigationBarItem(
-                        selected = route == NavRoutes.CALENDAR,
-                        onClick = {
-                            navController.navigate(NavRoutes.CALENDAR) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = null) },
-                        label = { Text("日历") }
-                    )
-                    NavigationBarItem(
-                        selected = route == NavRoutes.COURSES,
-                        onClick = {
-                            navController.navigate(NavRoutes.COURSES) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(Icons.Outlined.MenuBook, contentDescription = null) },
-                        label = { Text("课程") }
-                    )
-                    NavigationBarItem(
-                        selected = route == NavRoutes.INBOX,
-                        onClick = {
-                            navController.navigate(NavRoutes.INBOX) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(Icons.Outlined.Inbox, contentDescription = null) },
-                        label = { Text("候选") }
-                    )
-                    NavigationBarItem(
-                        selected = route == NavRoutes.SETTINGS,
-                        onClick = {
-                            navController.navigate(NavRoutes.SETTINGS) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(Icons.Outlined.Settings, contentDescription = null) },
-                        label = { Text("设置") }
-                    )
-                }
+                PremiumBottomBar(
+                    currentRoute = route,
+                    onNavigate = { destination ->
+                        navController.navigate(destination) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onCenterAction = { navController.navigate(NavRoutes.ADD_CANDIDATE) }
+                )
             }
         }
     ) { innerPadding ->
@@ -261,5 +217,136 @@ fun CampusTodoNavHost(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun PremiumBottomBar(
+    currentRoute: String,
+    onNavigate: (String) -> Unit,
+    onCenterAction: () -> Unit
+) {
+    val barShape = RoundedCornerShape(30.dp)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 18.dp, end = 18.dp, bottom = 8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(68.dp)
+                .shadow(20.dp, barShape, clip = false)
+                .clip(barShape)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xDE232A3F), Color(0xD1121729))
+                    )
+                )
+                .border(1.dp, Color(0x26FFFFFF), barShape)
+                .padding(horizontal = 18.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    BottomIcon(
+                        selected = currentRoute == NavRoutes.TODAY,
+                        icon = Icons.Outlined.Home,
+                        onClick = { onNavigate(NavRoutes.TODAY) }
+                    )
+                    BottomIcon(
+                        selected = currentRoute == NavRoutes.CALENDAR,
+                        icon = Icons.Outlined.CalendarMonth,
+                        onClick = { onNavigate(NavRoutes.CALENDAR) }
+                    )
+                }
+                Spacer(modifier = Modifier.width(74.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    BottomIcon(
+                        selected = currentRoute == NavRoutes.COURSES,
+                        icon = Icons.Outlined.MenuBook,
+                        onClick = { onNavigate(NavRoutes.COURSES) }
+                    )
+                    BottomIcon(
+                        selected = currentRoute == NavRoutes.SETTINGS,
+                        icon = Icons.Outlined.Settings,
+                        onClick = { onNavigate(NavRoutes.SETTINGS) }
+                    )
+                }
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .offset(y = (-20).dp)
+                .size(68.dp)
+                .shadow(16.dp, CircleShape, clip = false)
+                .clip(CircleShape)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xFFFFB56A), Color(0xFFF1873F))
+                    )
+                )
+                .border(1.5.dp, Color(0x4DFFFFFF), CircleShape)
+                .clickable(onClick = onCenterAction),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Add,
+                contentDescription = "新增",
+                tint = Color.White,
+                modifier = Modifier.size(29.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomIcon(
+    selected: Boolean,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit
+) {
+    val tint = if (selected) Color(0xFFFF9D58) else Color(0xFFD6DDEF)
+    val selectedBackground = Brush.verticalGradient(
+        listOf(Color(0x26FFAF72), Color(0x10FFAF72))
+    )
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .width(46.dp)
+            .height(44.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (selected) Color(0x14FFAA69) else Color.Transparent)
+            .clickable(onClick = onClick)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(30.dp)
+                .clip(CircleShape)
+                .background(if (selected) selectedBackground else Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent))),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(if (selected) 22.dp else 21.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Box(
+            modifier = Modifier
+                .width(if (selected) 14.dp else 0.dp)
+                .height(2.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(if (selected) Color(0x66FFA25C) else Color.Transparent)
+        )
     }
 }
