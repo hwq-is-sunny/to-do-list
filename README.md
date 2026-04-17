@@ -83,7 +83,7 @@
 
 ## 📂 项目结构
 
-
+```bash
 app/src/main/java/com/campus/todo
 ├── data                 # 数据层（数据库、实体类、DAO、仓库）
 ├── domain               # 业务解析逻辑
@@ -94,7 +94,7 @@ app/src/main/java/com/campus/todo
 ├── util                 # 工具类
 ├── MainActivity.kt      # 应用入口
 └── CampusTodoApp.kt     # Application 初始化
-
+```
 
 
 ## 🔧 安装与运行
