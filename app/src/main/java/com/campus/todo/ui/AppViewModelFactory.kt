@@ -33,7 +33,7 @@ class AppViewModelFactory(
             modelClass.isAssignableFrom(TodayViewModel::class.java) ->
                 TodayViewModel(repo) as T
             modelClass.isAssignableFrom(CalendarViewModel::class.java) ->
-                CalendarViewModel(repo) as T
+                CalendarViewModel(repo, app.settingsStore) as T
             modelClass.isAssignableFrom(CourseListViewModel::class.java) ->
                 CourseListViewModel(repo) as T
             modelClass.isAssignableFrom(CourseDetailViewModel::class.java) ->
@@ -45,7 +45,7 @@ class AppViewModelFactory(
             modelClass.isAssignableFrom(AddCandidateViewModel::class.java) ->
                 AddCandidateViewModel(repo, app.deepSeekAssist) as T
             modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
-                SettingsViewModel(app.sessionStore) as T
+                SettingsViewModel(repo, sched, app.sessionStore, app.settingsStore) as T
             modelClass.isAssignableFrom(LoginViewModel::class.java) ->
                 LoginViewModel(app.sessionStore) as T
             else -> throw IllegalArgumentException("Unknown VM ${modelClass.name}")

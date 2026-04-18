@@ -48,17 +48,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.platform.LocalContext
 import com.campus.todo.data.db.entity.Course
 import com.campus.todo.data.db.entity.Task
 import com.campus.todo.data.db.entity.TimetableSlot
 import com.campus.todo.ui.AppViewModelFactory
 import com.campus.todo.util.MinuteParse
-import android.widget.Toast
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.TextStyle
+import java.time.temporal.WeekFields
 import java.util.Locale
 
 @Composable
@@ -134,6 +133,7 @@ fun CalendarScreen(
                 CalendarDateStrip(
                     days = state.dateStrip,
                     selected = state.selected,
+                    displayWeekCount = state.displayWeekCount,
                     onDateClick = vm::selectDate
                 )
             }
@@ -250,8 +250,11 @@ private fun MenuActionText(text: String) {
 private fun CalendarDateStrip(
     days: List<LocalDate>,
     selected: LocalDate,
+    displayWeekCount: Boolean,
     onDateClick: (LocalDate) -> Unit
 ) {
+    val locale = Locale.getDefault()
+    val weekFields = WeekFields.of(locale)
     LazyRow(
         modifier = Modifier
             .fillMaxWidth(),
@@ -297,11 +300,24 @@ private fun CalendarDateStrip(
                     )
                 }
                 Text(
-                    text = day.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH).uppercase(Locale.ENGLISH),
+                    text = day.dayOfWeek.getDisplayName(TextStyle.SHORT, locale).uppercase(locale),
                     color = textColor,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
+                if (displayWeekCount) {
+                    val weekNumber = day.get(weekFields.weekOfWeekBasedYear())
+                    Text(
+                        text = if (locale.language.startsWith("zh", ignoreCase = true)) {
+                            "${weekNumber}周"
+                        } else {
+                            "W$weekNumber"
+                        },
+                        color = textColor.copy(alpha = 0.72f),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }
