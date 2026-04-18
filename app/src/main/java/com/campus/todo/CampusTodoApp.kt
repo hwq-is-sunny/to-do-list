@@ -1,10 +1,9 @@
 package com.campus.todo
 
 import android.app.Application
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
 import com.campus.todo.data.db.AppDatabase
 import com.campus.todo.data.repo.TodoRepository
+import com.campus.todo.data.settings.AppLocaleManager
 import com.campus.todo.data.settings.SettingsStore
 import com.campus.todo.data.session.SessionStore
 import com.campus.todo.network.DeepSeekAssist
@@ -26,7 +25,7 @@ class CampusTodoApp : Application() {
     override fun onCreate() {
         super.onCreate()
         val settings = runBlocking { settingsStore.currentSettings() }
-        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(settings.languageTag))
+        AppLocaleManager.applyToApplication(this, settings.languageTag)
         TodoNotificationChannels.ensureAll(this, settings)
     }
 }

@@ -1,6 +1,7 @@
 package com.campus.todo.share
 
 import android.content.Intent
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,10 +25,18 @@ import com.campus.todo.CampusTodoApp
 import com.campus.todo.MainActivity
 import com.campus.todo.R
 import com.campus.todo.data.db.entity.SourceKind
+import com.campus.todo.data.settings.AppLocaleManager
+import com.campus.todo.data.settings.SettingsStore
 import com.campus.todo.ui.theme.CampusTodoTheme
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class ShareImportActivity : ComponentActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        val languageTag = runBlocking { SettingsStore(newBase).currentLanguageTag() }
+        super.attachBaseContext(AppLocaleManager.wrapContext(newBase, languageTag))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

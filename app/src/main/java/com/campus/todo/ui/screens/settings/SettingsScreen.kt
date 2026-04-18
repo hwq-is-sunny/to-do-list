@@ -11,7 +11,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -63,10 +62,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.campus.todo.R
+import com.campus.todo.data.settings.AppLocaleManager
 import com.campus.todo.data.settings.AppLanguage
 import com.campus.todo.data.settings.ReminderMethod
 import com.campus.todo.ui.AppViewModelFactory
@@ -311,9 +310,10 @@ fun SettingsScreen(
             selected = state.currentLanguage,
             onDismiss = { showLanguageDialog = false },
             onConfirm = { language ->
-                vm.setLanguage(language)
-                AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language.tag))
                 showLanguageDialog = false
+                vm.setLanguage(language) {
+                    activity?.let { AppLocaleManager.applyToActivity(it, language.tag) }
+                }
             }
         )
     }

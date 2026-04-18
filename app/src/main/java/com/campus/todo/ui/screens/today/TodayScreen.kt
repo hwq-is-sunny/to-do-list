@@ -38,12 +38,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.campus.todo.R
 import com.campus.todo.data.db.entity.Task
 import com.campus.todo.ui.AppViewModelFactory
 import com.campus.todo.util.TimeUtils
@@ -78,6 +80,7 @@ fun TodayScreen(
     onOpenAddCandidate: () -> Unit,
     vm: TodayViewModel = viewModel(factory = factory)
 ) {
+    val locale = Locale.getDefault()
     val state by vm.state.collectAsStateWithLifecycle()
     val today = remember { LocalDate.now() }
     var selectedEpochDay by rememberSaveable { mutableLongStateOf(today.toEpochDay()) }
@@ -92,7 +95,7 @@ fun TodayScreen(
                 HomeTaskVisual(
                     id = t.id,
                     title = t.title,
-                    subtitle = "Task",
+                    subtitle = "",
                     timeLabel = t.dueAtEpoch?.let { TimeUtils.formatEpoch(it).substringAfter(" ") } ?: "--:--"
                 )
             }
@@ -123,7 +126,7 @@ fun TodayScreen(
             item {
                 GreetingHeader(
                     name = "Maria",
-                    monthLabel = selectedDate.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH))
+                    monthLabel = selectedDate.format(DateTimeFormatter.ofPattern("MMMM yyyy", locale))
                 )
             }
             item {
@@ -157,14 +160,14 @@ fun TodayScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         StatsPanel(
-                            title = "Completed",
-                            detail = "$completedCount/${taskItems.size} TASK",
+                            title = stringResource(R.string.today_completed_title),
+                            detail = stringResource(R.string.today_completed_detail, completedCount, taskItems.size),
                             accent = Brush.linearGradient(listOf(AccentPink, AccentOrange)),
                             bars = listOf(24.dp, 12.dp, 26.dp, 9.dp, 22.dp)
                         )
                         StatsPanel(
-                            title = "In progress",
-                            detail = "$inProgressCount TASK",
+                            title = stringResource(R.string.today_in_progress_title),
+                            detail = stringResource(R.string.today_in_progress_detail, inProgressCount),
                             accent = Brush.linearGradient(listOf(AccentPurple, AccentOrange)),
                             bars = listOf(10.dp, 22.dp, 14.dp, 20.dp, 11.dp)
                         )
@@ -173,7 +176,7 @@ fun TodayScreen(
             }
             item {
                 Text(
-                    text = "All Tasks",
+                    text = stringResource(R.string.calendar_all_tasks_title),
                     color = HeaderStrong,
                     fontSize = 37.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -219,7 +222,7 @@ private fun GreetingHeader(name: String, monthLabel: String) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text = "Good Morning,",
+                text = stringResource(R.string.today_greeting),
                 color = HeaderSubtle,
                 fontSize = 35.sp,
                 fontWeight = FontWeight.Medium,
@@ -287,6 +290,7 @@ private fun DateStrip(
     selected: LocalDate,
     onSelected: (LocalDate) -> Unit
 ) {
+    val locale = Locale.getDefault()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -331,7 +335,7 @@ private fun DateStrip(
                     )
                 }
                 Text(
-                    text = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH).uppercase(Locale.ENGLISH),
+                    text = date.dayOfWeek.getDisplayName(TextStyle.SHORT, locale).uppercase(locale),
                     color = text,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
@@ -349,7 +353,7 @@ private fun ModeTabs() {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "Everyday",
+                text = stringResource(R.string.today_everyday),
                 color = AccentOrange,
                 fontSize = 34.sp,
                 fontWeight = FontWeight.SemiBold
@@ -363,7 +367,7 @@ private fun ModeTabs() {
             )
         }
         Text(
-            text = "Weekly",
+            text = stringResource(R.string.today_weekly),
             color = Color(0xFFB8BED2),
             fontSize = 34.sp,
             fontWeight = FontWeight.Medium
@@ -377,6 +381,7 @@ private fun HeroOverviewCard(
     count: Int,
     onCheckNow: () -> Unit
 ) {
+    val locale = Locale.getDefault()
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -404,17 +409,17 @@ private fun HeroOverviewCard(
         )
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                text = "${date.dayOfMonth} ${date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH).uppercase(Locale.ENGLISH)}",
+                text = "${date.dayOfMonth} ${date.dayOfWeek.getDisplayName(TextStyle.SHORT, locale).uppercase(locale)}",
                 color = Color(0xFF646070),
                 fontSize = 14.sp
             )
             Text(
-                text = "Today's AI Analysis.",
+                text = stringResource(R.string.today_ai_analysis),
                 color = Color(0xFF6D6874),
                 fontSize = 18.sp
             )
             Text(
-                text = "You Have $count Tasks For Today.",
+                text = stringResource(R.string.today_task_summary, count),
                 color = Color.White,
                 fontSize = 44.sp,
                 lineHeight = 46.sp,
@@ -431,7 +436,7 @@ private fun HeroOverviewCard(
                 .padding(horizontal = 14.dp, vertical = 8.dp)
         ) {
             Text(
-                text = "Check Now",
+                text = stringResource(R.string.today_check_now),
                 color = Color(0xFF5F5C67),
                 fontWeight = FontWeight.Medium
             )
@@ -453,13 +458,13 @@ private fun PriorityPanel(tasks: List<HomeTaskVisual>, modifier: Modifier = Modi
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
-                text = "Priority Task",
+                text = stringResource(R.string.today_priority_task),
                 color = Color(0xFF182011),
                 fontSize = 30.sp,
                 fontWeight = FontWeight.SemiBold
             )
             if (tasks.isEmpty()) {
-                Text(text = "No task", color = Color(0xFF304023))
+                Text(text = stringResource(R.string.today_no_task), color = Color(0xFF304023))
             } else {
                 tasks.forEachIndexed { index, item ->
                     Row(

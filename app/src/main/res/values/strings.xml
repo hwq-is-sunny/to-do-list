@@ -11,6 +11,7 @@
     <string name="common_save">保存</string>
     <string name="common_cancel">取消</string>
     <string name="common_close">关闭</string>
+    <string name="common_done">完成</string>
 
     <string name="settings_title">设置</string>
     <string name="settings_language_title">语言</string>
@@ -32,6 +33,32 @@
     <string name="settings_calendar_view_section">日历视图</string>
     <string name="settings_display_week_count">显示周数</string>
     <string name="settings_saved">设置已保存</string>
+
+    <string name="today_greeting">早上好，</string>
+    <string name="today_everyday">每日</string>
+    <string name="today_weekly">每周</string>
+    <string name="today_ai_analysis">今日 AI 分析</string>
+    <string name="today_task_summary">你今天有 %1$d 项任务。</string>
+    <string name="today_check_now">立即查看</string>
+    <string name="today_priority_task">优先任务</string>
+    <string name="today_no_task">暂无任务</string>
+    <string name="today_completed_title">已完成</string>
+    <string name="today_completed_detail">%1$d/%2$d 项任务</string>
+    <string name="today_in_progress_title">进行中</string>
+    <string name="today_in_progress_detail">%1$d 项任务</string>
+
+    <string name="calendar_title">日历</string>
+    <string name="calendar_more">更多</string>
+    <string name="calendar_action_filter">筛选</string>
+    <string name="calendar_action_sort">排序</string>
+    <string name="calendar_action_toggle_view">切换视图</string>
+    <string name="calendar_all_tasks_title">全部任务</string>
+
+    <string name="courses_monthly_title">月度课程</string>
+    <string name="courses_required_title">必修课</string>
+    <string name="courses_elective_title">选修课</string>
+    <string name="courses_search_placeholder">搜索你的课程…</string>
+    <string name="courses_no_schedule">当天没有课程安排。</string>
 
     <string name="language_option_chinese">中文</string>
     <string name="language_option_english">English</string>

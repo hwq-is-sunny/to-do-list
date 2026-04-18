@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.campus.todo.R
 import com.campus.todo.data.db.entity.Course
 import com.campus.todo.data.db.entity.Task
 import com.campus.todo.data.db.entity.TimetableSlot
@@ -65,6 +67,9 @@ fun CalendarScreen(
     factory: AppViewModelFactory,
     vm: CalendarViewModel = viewModel(factory = factory)
 ) {
+    val filterAction = stringResource(R.string.calendar_action_filter)
+    val sortAction = stringResource(R.string.calendar_action_sort)
+    val toggleViewAction = stringResource(R.string.calendar_action_toggle_view)
     val state by vm.state.collectAsStateWithLifecycle()
     var filterMode by rememberSaveable { mutableStateOf(CalendarFilterMode.ALL) }
     var sortDescending by rememberSaveable { mutableStateOf(false) }
@@ -110,19 +115,22 @@ fun CalendarScreen(
             item {
                 CalendarHeader(
                     monthTitle = state.monthTitle,
+                    filterActionLabel = filterAction,
+                    sortActionLabel = sortAction,
+                    toggleViewActionLabel = toggleViewAction,
                     menuExpanded = menuExpanded,
                     onMenuToggle = { menuExpanded = !menuExpanded },
                     onDismissMenu = { menuExpanded = false },
                     onMenuAction = { action ->
                         menuExpanded = false
                         when (action) {
-                            "筛选" -> {
+                            filterAction -> {
                                 filterMode = filterMode.next()
                             }
-                            "排序" -> {
+                            sortAction -> {
                                 sortDescending = !sortDescending
                             }
-                            "切换视图" -> {
+                            toggleViewAction -> {
                                 compactView = !compactView
                             }
                         }
@@ -147,6 +155,9 @@ fun CalendarScreen(
 @Composable
 private fun CalendarHeader(
     monthTitle: String,
+    filterActionLabel: String,
+    sortActionLabel: String,
+    toggleViewActionLabel: String,
     menuExpanded: Boolean,
     onMenuToggle: () -> Unit,
     onDismissMenu: () -> Unit,
@@ -160,7 +171,7 @@ private fun CalendarHeader(
         ) {
             Spacer(modifier = Modifier.width(40.dp))
             Text(
-                text = "Calendar",
+                text = stringResource(R.string.calendar_title),
                 color = Color(0xFFF2F5FC),
                 fontSize = 48.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -178,7 +189,7 @@ private fun CalendarHeader(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.MoreHoriz,
-                        contentDescription = "更多",
+                        contentDescription = stringResource(R.string.calendar_more),
                         tint = Color(0xFFE7EBF7),
                         modifier = Modifier.size(22.dp)
                     )
@@ -194,8 +205,8 @@ private fun CalendarHeader(
                     modifier = Modifier.width(136.dp)
                 ) {
                     DropdownMenuItem(
-                        text = { MenuActionText("筛选") },
-                        onClick = { onMenuAction("筛选") },
+                        text = { MenuActionText(filterActionLabel) },
+                        onClick = { onMenuAction(filterActionLabel) },
                         colors = MenuDefaults.itemColors(
                             textColor = Color(0xFFEAF0FF),
                             leadingIconColor = Color(0xFFEAF0FF),
@@ -204,8 +215,8 @@ private fun CalendarHeader(
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
                     )
                     DropdownMenuItem(
-                        text = { MenuActionText("排序") },
-                        onClick = { onMenuAction("排序") },
+                        text = { MenuActionText(sortActionLabel) },
+                        onClick = { onMenuAction(sortActionLabel) },
                         colors = MenuDefaults.itemColors(
                             textColor = Color(0xFFEAF0FF),
                             leadingIconColor = Color(0xFFEAF0FF),
@@ -214,8 +225,8 @@ private fun CalendarHeader(
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
                     )
                     DropdownMenuItem(
-                        text = { MenuActionText("切换视图") },
-                        onClick = { onMenuAction("切换视图") },
+                        text = { MenuActionText(toggleViewActionLabel) },
+                        onClick = { onMenuAction(toggleViewActionLabel) },
                         colors = MenuDefaults.itemColors(
                             textColor = Color(0xFFEAF0FF),
                             leadingIconColor = Color(0xFFEAF0FF),
@@ -339,7 +350,7 @@ private fun TimelineContainer(items: List<TimelineVisualItem>, compactView: Bool
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(
-                text = "All Tasks",
+                text = stringResource(R.string.calendar_all_tasks_title),
                 color = Color(0xFFF2F5FC),
                 fontSize = 42.sp,
                 fontWeight = FontWeight.SemiBold

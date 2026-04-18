@@ -85,6 +85,9 @@ class SettingsStore(private val context: Context) {
 
     suspend fun currentSettings(): AppSettings = settingsFlow.first()
 
+    suspend fun currentLanguageTag(): String =
+        context.settingsDataStore.data.map { it[keyLanguageTag].orEmpty() }.first()
+
     suspend fun setLanguageTag(languageTag: String) {
         context.settingsDataStore.edit { prefs ->
             prefs[keyLanguageTag] = languageTag.trim()

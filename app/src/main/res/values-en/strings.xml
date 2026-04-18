@@ -11,6 +11,7 @@
     <string name="common_save">Save</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_close">Close</string>
+    <string name="common_done">Done</string>
 
     <string name="settings_title">Settings</string>
     <string name="settings_language_title">Language</string>
@@ -32,6 +33,32 @@
     <string name="settings_calendar_view_section">Calendar View</string>
     <string name="settings_display_week_count">Display week numbers</string>
     <string name="settings_saved">Settings saved</string>
+
+    <string name="today_greeting">Good Morning,</string>
+    <string name="today_everyday">Everyday</string>
+    <string name="today_weekly">Weekly</string>
+    <string name="today_ai_analysis">AI Analysis for Today</string>
+    <string name="today_task_summary">You have %1$d tasks for today.</string>
+    <string name="today_check_now">Check Now</string>
+    <string name="today_priority_task">Priority Task</string>
+    <string name="today_no_task">No task</string>
+    <string name="today_completed_title">Completed</string>
+    <string name="today_completed_detail">%1$d/%2$d tasks</string>
+    <string name="today_in_progress_title">In progress</string>
+    <string name="today_in_progress_detail">%1$d tasks</string>
+
+    <string name="calendar_title">Calendar</string>
+    <string name="calendar_more">More</string>
+    <string name="calendar_action_filter">Filter</string>
+    <string name="calendar_action_sort">Sort</string>
+    <string name="calendar_action_toggle_view">Toggle View</string>
+    <string name="calendar_all_tasks_title">All Tasks</string>
+
+    <string name="courses_monthly_title">Monthly Courses</string>
+    <string name="courses_required_title">Required Courses</string>
+    <string name="courses_elective_title">Elective</string>
+    <string name="courses_search_placeholder">Search your course…</string>
+    <string name="courses_no_schedule">No schedule for this day.</string>
 
     <string name="language_option_chinese">Chinese</string>
     <string name="language_option_english">English</string>

@@ -43,12 +43,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.campus.todo.R
 import com.campus.todo.data.db.entity.Course
 import com.campus.todo.ui.AppViewModelFactory
 import java.time.LocalDate
@@ -64,13 +66,14 @@ fun CourseListScreen(
 ) {
     val courses by vm.courses.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val locale = Locale.getDefault()
     val today = remember { LocalDate.now() }
     var selectedEpochDay by rememberSaveable { mutableLongStateOf(today.toEpochDay()) }
     var keyword by rememberSaveable { mutableStateOf("") }
     val selectedDate = LocalDate.ofEpochDay(selectedEpochDay)
     val currentMonth = remember(selectedDate) { YearMonth.from(selectedDate) }
-    val monthLabel = remember(currentMonth) {
-        currentMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH))
+    val monthLabel = remember(currentMonth, locale) {
+        currentMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", locale))
     }
 
     val scheduleByDay = remember(currentMonth) { demoSchedule(currentMonth) }
@@ -128,13 +131,13 @@ fun CourseListScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     CourseCategoryCard(
-                        title = "Required Coursee",
+                        title = stringResource(R.string.courses_required_title),
                         items = requiredCourses.map { it.name },
                         tint = Brush.verticalGradient(listOf(Color(0xFFC4B8FF), Color(0xFFABA0F2))),
                         modifier = Modifier.weight(1f)
                     )
                     CourseCategoryCard(
-                        title = "Elective",
+                        title = stringResource(R.string.courses_elective_title),
                         items = electiveCourses.map { it.name },
                         tint = Brush.verticalGradient(listOf(Color(0xFF72E0DD), Color(0xFF54C7D2))),
                         modifier = Modifier.weight(1f)
@@ -175,7 +178,7 @@ private fun TopActionRow(
                     singleLine = true,
                     placeholder = {
                         Text(
-                            text = "Please search for your course.",
+                            text = stringResource(R.string.courses_search_placeholder),
                             color = Color(0xFF96A1BA),
                             fontSize = 13.sp
                         )
@@ -210,7 +213,12 @@ private fun TopActionRow(
                     .clickable(onClick = onDone)
                     .padding(horizontal = 16.dp, vertical = 10.dp)
             ) {
-                Text("Done", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                Text(
+                    stringResource(R.string.common_done),
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
         Row(
@@ -235,7 +243,7 @@ private fun MonthCalendarSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
-            text = "Monthly Courses",
+            text = stringResource(R.string.courses_monthly_title),
             color = Color(0xFFE9EEFB),
             fontSize = 36.sp,
             fontWeight = FontWeight.Medium
@@ -250,7 +258,11 @@ private fun MonthCalendarSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            listOf("S", "M", "T", "W", "T", "F", "S").forEach {
+            val dayLabels = listOf(7, 1, 2, 3, 4, 5, 6).map { day ->
+                java.time.DayOfWeek.of(day)
+                    .getDisplayName(java.time.format.TextStyle.NARROW, Locale.getDefault())
+            }
+            dayLabels.forEach {
                 Text(text = it, color = Color(0xFFB7C0D8), fontSize = 17.sp, modifier = Modifier.width(40.dp))
             }
         }
@@ -356,7 +368,7 @@ private fun DetailPanel(
                     .background(Color(0x742A2A2A))
             )
             Text(
-                text = date.format(DateTimeFormatter.ofPattern("MMMM d", Locale.ENGLISH)),
+                text = date.format(DateTimeFormatter.ofPattern("MMMM d", Locale.getDefault())),
                 color = Color(0xFFF7F9FF),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold
@@ -364,7 +376,7 @@ private fun DetailPanel(
 
             if (details.isEmpty()) {
                 Text(
-                    text = "No schedule for this day.",
+                    text = stringResource(R.string.courses_no_schedule),
                     color = Color(0xFFDEE5F8),
                     fontSize = 14.sp
                 )

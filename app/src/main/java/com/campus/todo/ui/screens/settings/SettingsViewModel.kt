@@ -40,9 +40,10 @@ class SettingsViewModel(
         SettingsUiState()
     )
 
-    fun setLanguage(language: AppLanguage) {
+    fun setLanguage(language: AppLanguage, onApplied: () -> Unit = {}) {
         viewModelScope.launch {
             settingsStore.setLanguageTag(language.tag)
+            onApplied()
         }
     }
 
