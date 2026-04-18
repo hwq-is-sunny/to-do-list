@@ -2,6 +2,7 @@ package com.campus.todo.share
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +19,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.campus.todo.CampusTodoApp
 import com.campus.todo.MainActivity
@@ -27,7 +27,7 @@ import com.campus.todo.data.db.entity.SourceKind
 import com.campus.todo.ui.theme.CampusTodoTheme
 import kotlinx.coroutines.launch
 
-class ShareImportActivity : AppCompatActivity() {
+class ShareImportActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
