@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Campus Todo</string>
+    <string name="share_import_title">Import to Inbox</string>
+    <string name="share_import_title_text">Share Import</string>
+    <string name="share_import_subtitle">You can write the shared text into Inbox first, then review and organize it from the detail page.</string>
+    <string name="share_import_preview_label">Shared Text Preview</string>
+    <string name="share_import_confirm">Save to Inbox</string>
+    <string name="share_import_missing_text">No text was received. Please try sharing again from a supported app.</string>
+
+    <string name="common_save">Save</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_close">Close</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_language_title">Language</string>
+    <string name="settings_ai_planning_title">AI Planning</string>
+    <string name="settings_ai_planning_description">Save API settings locally. Existing AI assist requests will use this base URL, key, and model.</string>
+    <string name="settings_ai_base_url">API Base URL</string>
+    <string name="settings_ai_api_key">API Key</string>
+    <string name="settings_ai_model">Model</string>
+    <string name="settings_schedule_reminder_section">Reminder Settings</string>
+    <string name="settings_task_reminder_toggle">Task reminder notifications</string>
+    <string name="settings_reminder_method_title">Default reminder method and ringtone</string>
+    <string name="settings_choose_ringtone">Choose ringtone</string>
+    <string name="settings_vibrate_mode_hint">No ringtone will be played in vibration mode.</string>
+    <string name="settings_ringtone_default">System default notification sound</string>
+    <string name="settings_tomato_focus_title">Tomato Focus</string>
+    <string name="settings_tomato_focus_enable">Enable focus break reminders</string>
+    <string name="settings_tomato_focus_interval_title">Reminder interval</string>
+    <string name="settings_interval_minutes_value">%1$d min</string>
+    <string name="settings_calendar_view_section">Calendar View</string>
+    <string name="settings_display_week_count">Display week numbers</string>
+    <string name="settings_saved">Settings saved</string>
+
+    <string name="language_option_chinese">Chinese</string>
+    <string name="language_option_english">English</string>
+    <string name="reminder_method_sound">Sound</string>
+    <string name="reminder_method_vibrate">Vibration</string>
+    <string name="notification_permission_granted">Notification permission granted</string>
+    <string name="notification_permission_denied">Notification permission is off, so reminders may not appear</string>
+
+    <string name="notification_channel_normal_name">Normal reminders</string>
+    <string name="notification_channel_normal_description">Gentle reminders when a deadline is approaching</string>
+    <string name="notification_channel_important_name">Important reminders</string>
+    <string name="notification_channel_important_description">Items that should be handled first</string>
+    <string name="notification_channel_urgent_name">Urgent reminders</string>
+    <string name="notification_channel_urgent_description">High-priority items that are near due</string>
+    <string name="notification_channel_focus_name">Tomato Focus reminders</string>
+    <string name="notification_channel_focus_description">Periodic reminders that tell you to take a short break</string>
+
+    <string name="task_reminder_title">Campus Todo Reminder</string>
+    <string name="task_reminder_prefix">Task: </string>
+    <string name="task_reminder_body">The deadline is getting close. Take care of it when you can.</string>
+    <string name="draft_reminder_title">Inbox Draft Reminder</string>
+    <string name="draft_reminder_body">Draft “%1$s” is close to its deadline. Drafts do not auto-remind, so please confirm it in Inbox and add it as a real task.</string>
+    <string name="tomato_focus_notification_title">Tomato Focus</string>
+    <string name="tomato_focus_notification_body">You have been focusing for %1$d minutes. Time to stretch and take a short break.</string>
+
+    <string name="ai_missing_api_key">No API key is configured yet. Save your local AI settings in Settings first.</string>
+
+    <string name="add_candidate_title">Import Candidate</string>
+    <string name="add_candidate_heading">Import Text into Inbox</string>
+    <string name="add_candidate_description">Paste course notices or homework text here. AI Assist can try to structure it, but the detail page remains the final source of truth.</string>
+    <string name="add_candidate_source_label">Source</string>
+    <string name="add_candidate_placeholder">Paste or type your course notice…</string>
+    <string name="add_candidate_input_required">Please enter some content first.</string>
+    <string name="add_candidate_ai_title_prefix">[Title] </string>
+    <string name="add_candidate_ai_course_prefix">[Course Hint] </string>
+    <string name="add_candidate_ai_due_prefix">[Due Timestamp] </string>
+    <string name="add_candidate_ai_type_prefix">[Type] </string>
+    <string name="add_candidate_ai_urgency_prefix">[Urgency] </string>
+    <string name="add_candidate_ai_original_prefix">Original Text</string>
+    <string name="add_candidate_ai_loading">AI is parsing…</string>
+    <string name="add_candidate_ai_action">AI Assist</string>
+    <string name="add_candidate_ai_failed">AI parsing failed</string>
+    <string name="add_candidate_submit">Create Candidate</string>
+    <string name="add_candidate_source_wechat">WeChat (mock)</string>
+    <string name="add_candidate_source_qq">QQ (mock)</string>
+    <string name="add_candidate_source_zhihuishu">Zhihuishu (mock)</string>
+    <string name="add_candidate_source_chaoxing">Chaoxing (mock)</string>
+    <string name="add_candidate_source_portal">TJU Portal (mock)</string>
+    <string name="add_candidate_source_manual">Manual Input</string>
+</resources>

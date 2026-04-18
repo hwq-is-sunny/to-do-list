@@ -1,7 +1,17 @@
 package com.campus.todo.ui.screens.settings
 
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.media.RingtoneManager
+import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,7 +27,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,18 +34,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,11 +57,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.os.LocaleListCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.campus.todo.R
+import com.campus.todo.data.settings.AppLanguage
+import com.campus.todo.data.settings.ReminderMethod
 import com.campus.todo.ui.AppViewModelFactory
 
 @Composable
@@ -59,12 +79,50 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val activity = context as? ComponentActivity
-    var autoSync by rememberSaveable { mutableStateOf(true) }
-    var meetingReminder by rememberSaveable { mutableStateOf(true) }
-    var displayWeekCount by rememberSaveable { mutableStateOf(true) }
+    val state by vm.state.collectAsStateWithLifecycle()
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    var showAiDialog by remember { mutableStateOf(false) }
+    var showTomatoDialog by remember { mutableStateOf(false) }
+    var showReminderDialog by remember { mutableStateOf(false) }
+    var reminderDraftMethod by remember(state.settings.reminderMethod) {
+        mutableStateOf(state.settings.reminderMethod)
+    }
+    var reminderDraftRingtone by remember(state.settings.ringtoneUri) {
+        mutableStateOf(state.settings.ringtoneUri)
+    }
 
-    val onFeedback: (String) -> Unit = { text ->
-        Toast.makeText(context, "$text 功能后续接入", Toast.LENGTH_SHORT).show()
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        Toast.makeText(
+            context,
+            context.getString(
+                if (granted) R.string.notification_permission_granted
+                else R.string.notification_permission_denied
+            ),
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+    val ringtonePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            @Suppress("DEPRECATION")
+            val picked: Uri? = result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            picked?.let { reminderDraftRingtone = it.toString() }
+        }
+    }
+
+    fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     Box(
@@ -94,15 +152,17 @@ fun SettingsScreen(
                         onClick = { activity?.onBackPressedDispatcher?.onBackPressed() }
                     )
                     Text(
-                        text = "Settings",
+                        text = stringResource(R.string.settings_title),
                         color = Color(0xFFF1F5FF),
-                        fontSize = 46.sp,
+                        fontSize = 42.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = (-0.5).sp
                     )
                     CircleActionIcon(
-                        icon = Icons.Outlined.Menu,
-                        onClick = { onFeedback("菜单") }
+                        icon = Icons.Outlined.Logout,
+                        onClick = {
+                            vm.logout(onDone = onLogout)
+                        }
                     )
                 }
             }
@@ -125,21 +185,21 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         TopFeatureChip(
-                            icon = Icons.Outlined.Palette,
-                            title = "Theme Colors",
-                            onClick = { onFeedback("Theme Colors") },
+                            icon = Icons.Outlined.Language,
+                            title = stringResource(R.string.settings_language_title),
+                            onClick = { showLanguageDialog = true },
                             modifier = Modifier.weight(1f)
                         )
                         TopFeatureChip(
                             icon = Icons.Outlined.AutoAwesome,
-                            title = "AI Planning",
-                            onClick = { onFeedback("AI Planning") },
+                            title = stringResource(R.string.settings_ai_planning_title),
+                            onClick = { showAiDialog = true },
                             modifier = Modifier.weight(1f)
                         )
                         TopFeatureChip(
                             icon = Icons.Outlined.Timer,
-                            title = "Tomato Focus",
-                            onClick = { onFeedback("Tomato Focus") },
+                            title = stringResource(R.string.settings_tomato_focus_title),
+                            onClick = { showTomatoDialog = true },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -149,100 +209,387 @@ fun SettingsScreen(
             item {
                 SettingsGroupCard {
                     SettingsArrowRow(
-                        title = "Schedule Import and Management",
-                        onClick = { onFeedback("Schedule Import and Management") }
-                    )
-                    GroupDivider()
-                    SettingsSwitchRow(
-                        title = "Automatic schedule synchronization",
-                        checked = autoSync,
-                        onCheckedChange = { autoSync = it }
+                        title = stringResource(R.string.settings_language_title),
+                        trailingText = languageLabel(state.currentLanguage),
+                        onClick = { showLanguageDialog = true }
                     )
                     GroupDivider()
                     SettingsArrowRow(
-                        title = "On the computer and ipad access to schedule",
-                        onClick = { onFeedback("Desktop and iPad schedule access") }
+                        title = stringResource(R.string.settings_ai_planning_title),
+                        trailingText = state.settings.normalizedAiModel,
+                        onClick = { showAiDialog = true }
                     )
                 }
             }
 
             item {
                 Text(
-                    text = "Schedule reminder",
+                    text = stringResource(R.string.settings_schedule_reminder_section),
                     color = Color(0xFFF08B4A),
-                    fontSize = 30.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
 
             item {
                 SettingsGroupCard {
-                    SettingsArrowRow(
-                        title = "Default reminder time",
-                        onClick = { onFeedback("Default reminder time") }
-                    )
-                    GroupDivider()
                     SettingsSwitchRow(
-                        title = "Meeting schedule alarm reminder",
-                        checked = meetingReminder,
-                        onCheckedChange = { meetingReminder = it }
+                        title = stringResource(R.string.settings_task_reminder_toggle),
+                        checked = state.settings.taskReminderEnabled,
+                        onCheckedChange = {
+                            if (it) requestNotificationPermissionIfNeeded()
+                            vm.setTaskReminderEnabled(it)
+                        }
                     )
                     GroupDivider()
                     SettingsArrowRow(
-                        title = "Default reminder method and ringtone",
-                        onClick = { onFeedback("Default reminder method and ringtone") }
+                        title = stringResource(R.string.settings_reminder_method_title),
+                        trailingText = reminderMethodLabel(state.settings.reminderMethod),
+                        onClick = {
+                            reminderDraftMethod = state.settings.reminderMethod
+                            reminderDraftRingtone = state.settings.ringtoneUri
+                            showReminderDialog = true
+                        }
                     )
                 }
             }
 
             item {
                 Text(
-                    text = "Calendar view",
+                    text = stringResource(R.string.settings_tomato_focus_title),
                     color = Color(0xFFF08B4A),
-                    fontSize = 30.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
 
             item {
                 SettingsGroupCard {
-                    SettingsArrowRow(
-                        title = "Other calendars",
-                        trailingText = "Chinese Lunar Calender",
-                        onClick = { onFeedback("Other calendars") }
-                    )
-                    GroupDivider()
-                    SettingsArrowRow(
-                        title = "Time zone priority",
-                        trailingText = "Closed",
-                        onClick = { onFeedback("Time zone priority") }
-                    )
-                    GroupDivider()
-                    SettingsArrowRow(
-                        title = "The beginning of the week",
-                        trailingText = "Regional default",
-                        onClick = { onFeedback("The beginning of the week") }
-                    )
-                    GroupDivider()
                     SettingsSwitchRow(
-                        title = "Display the number of weeks",
-                        checked = displayWeekCount,
-                        onCheckedChange = { displayWeekCount = it }
+                        title = stringResource(R.string.settings_tomato_focus_enable),
+                        checked = state.settings.tomatoFocusEnabled,
+                        onCheckedChange = {
+                            if (it) requestNotificationPermissionIfNeeded()
+                            vm.setTomatoFocusEnabled(it)
+                        }
                     )
                     GroupDivider()
                     SettingsArrowRow(
-                        title = "Moon view selection",
-                        trailingText = "Default view",
-                        onClick = { onFeedback("Moon view selection") }
+                        title = stringResource(R.string.settings_tomato_focus_interval_title),
+                        trailingText = stringResource(
+                            R.string.settings_interval_minutes_value,
+                            state.settings.tomatoFocusIntervalMinutes
+                        ),
+                        onClick = { showTomatoDialog = true }
                     )
-                    GroupDivider()
-                    SettingsArrowRow(
-                        title = "Festival Management",
-                        onClick = { onFeedback("Festival Management") }
+                }
+            }
+
+            item {
+                Text(
+                    text = stringResource(R.string.settings_calendar_view_section),
+                    color = Color(0xFFF08B4A),
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            item {
+                SettingsGroupCard {
+                    SettingsSwitchRow(
+                        title = stringResource(R.string.settings_display_week_count),
+                        checked = state.settings.displayWeekCount,
+                        onCheckedChange = vm::setDisplayWeekCount
                     )
                 }
             }
         }
+    }
+
+    if (showLanguageDialog) {
+        LanguageDialog(
+            selected = state.currentLanguage,
+            onDismiss = { showLanguageDialog = false },
+            onConfirm = { language ->
+                vm.setLanguage(language)
+                AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language.tag))
+                showLanguageDialog = false
+            }
+        )
+    }
+
+    if (showAiDialog) {
+        AiConfigDialog(
+            currentBaseUrl = state.settings.normalizedAiBaseUrl,
+            currentApiKey = state.settings.aiApiKey,
+            currentModel = state.settings.normalizedAiModel,
+            onDismiss = { showAiDialog = false },
+            onSave = { baseUrl, apiKey, model ->
+                vm.saveAiConfig(baseUrl, apiKey, model)
+                Toast.makeText(context, context.getString(R.string.settings_saved), Toast.LENGTH_SHORT).show()
+                showAiDialog = false
+            }
+        )
+    }
+
+    if (showTomatoDialog) {
+        TomatoFocusDialog(
+            currentInterval = state.settings.tomatoFocusIntervalMinutes,
+            onDismiss = { showTomatoDialog = false },
+            onConfirm = { minutes ->
+                vm.setTomatoFocusInterval(minutes)
+                showTomatoDialog = false
+            }
+        )
+    }
+
+    if (showReminderDialog) {
+        ReminderDialog(
+            currentMethod = reminderDraftMethod,
+            currentRingtoneUri = reminderDraftRingtone,
+            onDismiss = { showReminderDialog = false },
+            onMethodChange = { reminderDraftMethod = it },
+            onRingtoneChange = { reminderDraftRingtone = it },
+            onPickRingtone = {
+                val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                    putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION)
+                    putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                    putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                    val existingUri = reminderDraftRingtone.takeIf { it.isNotBlank() }?.let(Uri::parse)
+                    putExtra(
+                        RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
+                        existingUri ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                    )
+                }
+                ringtonePickerLauncher.launch(intent)
+            },
+            onSave = { method, ringtoneUri ->
+                vm.setReminderMethod(method)
+                vm.setRingtoneUri(ringtoneUri)
+                Toast.makeText(context, context.getString(R.string.settings_saved), Toast.LENGTH_SHORT).show()
+                showReminderDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun LanguageDialog(
+    selected: AppLanguage,
+    onDismiss: () -> Unit,
+    onConfirm: (AppLanguage) -> Unit
+) {
+    var temp by remember(selected) { mutableStateOf(selected) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = { onConfirm(temp) }) {
+                Text(stringResource(R.string.common_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_cancel))
+            }
+        },
+        title = { Text(stringResource(R.string.settings_language_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                AppLanguage.entries.forEach { language ->
+                    SelectableRow(
+                        selected = temp == language,
+                        onClick = { temp = language },
+                        title = when (language) {
+                            AppLanguage.CHINESE -> stringResource(R.string.language_option_chinese)
+                            AppLanguage.ENGLISH -> stringResource(R.string.language_option_english)
+                        }
+                    )
+                }
+            }
+        }
+    )
+}
+
+@Composable
+private fun AiConfigDialog(
+    currentBaseUrl: String,
+    currentApiKey: String,
+    currentModel: String,
+    onDismiss: () -> Unit,
+    onSave: (String, String, String) -> Unit
+) {
+    var baseUrl by remember(currentBaseUrl) { mutableStateOf(currentBaseUrl) }
+    var apiKey by remember(currentApiKey) { mutableStateOf(currentApiKey) }
+    var model by remember(currentModel) { mutableStateOf(currentModel) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = { onSave(baseUrl, apiKey, model) }) {
+                Text(stringResource(R.string.common_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_cancel))
+            }
+        },
+        title = { Text(stringResource(R.string.settings_ai_planning_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = stringResource(R.string.settings_ai_planning_description),
+                    fontSize = 13.sp,
+                    color = Color(0xFF6C7285)
+                )
+                OutlinedTextField(
+                    value = baseUrl,
+                    onValueChange = { baseUrl = it },
+                    label = { Text(stringResource(R.string.settings_ai_base_url)) },
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = apiKey,
+                    onValueChange = { apiKey = it },
+                    label = { Text(stringResource(R.string.settings_ai_api_key)) },
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = model,
+                    onValueChange = { model = it },
+                    label = { Text(stringResource(R.string.settings_ai_model)) },
+                    singleLine = true
+                )
+            }
+        }
+    )
+}
+
+@Composable
+private fun TomatoFocusDialog(
+    currentInterval: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit
+) {
+    val options = listOf(15, 20, 25, 30, 45, 60)
+    var selected by remember(currentInterval) { mutableIntStateOf(currentInterval) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = { onConfirm(selected) }) {
+                Text(stringResource(R.string.common_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_cancel))
+            }
+        },
+        title = { Text(stringResource(R.string.settings_tomato_focus_interval_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                options.forEach { minutes ->
+                    SelectableRow(
+                        selected = selected == minutes,
+                        onClick = { selected = minutes },
+                        title = stringResource(R.string.settings_interval_minutes_value, minutes)
+                    )
+                }
+            }
+        }
+    )
+}
+
+@Composable
+private fun ReminderDialog(
+    currentMethod: ReminderMethod,
+    currentRingtoneUri: String,
+    onDismiss: () -> Unit,
+    onMethodChange: (ReminderMethod) -> Unit,
+    onRingtoneChange: (String) -> Unit,
+    onPickRingtone: () -> Unit,
+    onSave: (ReminderMethod, String) -> Unit
+) {
+    val context = LocalContext.current
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSave(
+                        currentMethod,
+                        if (currentMethod == ReminderMethod.VIBRATE) "" else currentRingtoneUri
+                    )
+                }
+            ) {
+                Text(stringResource(R.string.common_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_cancel))
+            }
+        },
+        title = { Text(stringResource(R.string.settings_reminder_method_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SelectableRow(
+                    selected = currentMethod == ReminderMethod.SOUND,
+                    onClick = { onMethodChange(ReminderMethod.SOUND) },
+                    title = stringResource(R.string.reminder_method_sound)
+                )
+                SelectableRow(
+                    selected = currentMethod == ReminderMethod.VIBRATE,
+                    onClick = {
+                        onMethodChange(ReminderMethod.VIBRATE)
+                        onRingtoneChange("")
+                    },
+                    title = stringResource(R.string.reminder_method_vibrate)
+                )
+                if (currentMethod == ReminderMethod.SOUND) {
+                    TextButton(onClick = onPickRingtone) {
+                        Text(stringResource(R.string.settings_choose_ringtone))
+                    }
+                    Text(
+                        text = ringtoneLabel(
+                            context = context,
+                            uriString = currentRingtoneUri
+                        ),
+                        color = Color(0xFF6C7285),
+                        fontSize = 13.sp
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.settings_vibrate_mode_hint),
+                        color = Color(0xFF6C7285),
+                        fontSize = 13.sp
+                    )
+                }
+            }
+        }
+    )
+}
+
+@Composable
+private fun SelectableRow(
+    selected: Boolean,
+    onClick: () -> Unit,
+    title: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(selected = selected, onClick = onClick)
+        Text(
+            text = title,
+            fontSize = 15.sp,
+            color = Color(0xFF1C2230)
+        )
     }
 }
 
@@ -405,4 +752,26 @@ private fun GroupDivider() {
             .padding(horizontal = 8.dp)
             .background(Color(0x1EFFFFFF))
     )
+}
+
+@Composable
+private fun languageLabel(language: AppLanguage): String = when (language) {
+    AppLanguage.CHINESE -> stringResource(R.string.language_option_chinese)
+    AppLanguage.ENGLISH -> stringResource(R.string.language_option_english)
+}
+
+@Composable
+private fun reminderMethodLabel(method: ReminderMethod): String = when (method) {
+    ReminderMethod.SOUND -> stringResource(R.string.reminder_method_sound)
+    ReminderMethod.VIBRATE -> stringResource(R.string.reminder_method_vibrate)
+}
+
+private fun ringtoneLabel(context: android.content.Context, uriString: String): String {
+    if (uriString.isBlank()) return context.getString(R.string.settings_ringtone_default)
+    return runCatching {
+        val ringtone = RingtoneManager.getRingtone(context, Uri.parse(uriString))
+        ringtone?.getTitle(context)
+    }.getOrNull().orEmpty().ifBlank {
+        context.getString(R.string.settings_ringtone_default)
+    }
 }

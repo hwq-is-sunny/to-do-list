@@ -15,20 +15,18 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.campus.todo.CampusTodoApp
 import com.campus.todo.MainActivity
+import com.campus.todo.R
 import com.campus.todo.data.db.entity.SourceKind
 import com.campus.todo.ui.theme.CampusTodoTheme
 import kotlinx.coroutines.launch
 
-/**
- * Share Target 占位：第二轮可在此接入真实解析 / 深链路由。
- * 当前将分享文本以 [SourceKind.SHARE_IMPORT_STUB] 写入候选箱，并跳转主界面打开详情。
- */
 class ShareImportActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,7 +37,9 @@ class ShareImportActivity : ComponentActivity() {
 
         setContent {
             CampusTodoTheme {
-                val preview = remember(raw) { raw.ifEmpty { "（未收到文本，请从支持分享的应用重试）" } }
+                val preview = remember(raw) {
+                    raw.ifEmpty { getString(R.string.share_import_missing_text) }
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -47,9 +47,9 @@ class ShareImportActivity : ComponentActivity() {
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalAlignment = Alignment.Start
                 ) {
-                    Text("分享导入（占位）", style = MaterialTheme.typography.titleLarge)
+                    Text(stringResource(R.string.share_import_title_text), style = MaterialTheme.typography.titleLarge)
                     Text(
-                        "第二轮将完善解析规则与去重。现在可先写入候选箱并手动确认。",
+                        stringResource(R.string.share_import_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -57,7 +57,7 @@ class ShareImportActivity : ComponentActivity() {
                         value = preview,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("分享内容预览") },
+                        label = { Text(stringResource(R.string.share_import_preview_label)) },
                         minLines = 4
                     )
                     Button(
@@ -76,9 +76,9 @@ class ShareImportActivity : ComponentActivity() {
                         },
                         enabled = raw.isNotBlank()
                     ) {
-                        Text("写入候选箱")
+                        Text(stringResource(R.string.share_import_confirm))
                     }
-                    TextButton(onClick = { finish() }) { Text("关闭") }
+                    TextButton(onClick = { finish() }) { Text(stringResource(R.string.common_close)) }
                 }
             }
         }

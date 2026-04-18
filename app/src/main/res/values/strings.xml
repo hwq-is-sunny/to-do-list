@@ -2,4 +2,83 @@
 <resources>
     <string name="app_name">校园待办</string>
     <string name="share_import_title">导入到候选箱</string>
+    <string name="share_import_title_text">分享导入</string>
+    <string name="share_import_subtitle">你可以先把分享文本写入候选箱，再在详情页确认和整理。</string>
+    <string name="share_import_preview_label">分享内容预览</string>
+    <string name="share_import_confirm">写入候选箱</string>
+    <string name="share_import_missing_text">未收到文本，请从支持分享的应用重试。</string>
+
+    <string name="common_save">保存</string>
+    <string name="common_cancel">取消</string>
+    <string name="common_close">关闭</string>
+
+    <string name="settings_title">设置</string>
+    <string name="settings_language_title">语言</string>
+    <string name="settings_ai_planning_title">AI Planning</string>
+    <string name="settings_ai_planning_description">本地保存 API 配置，现有 AI 辅助解析会直接使用这里的地址、密钥和模型。</string>
+    <string name="settings_ai_base_url">API Base URL</string>
+    <string name="settings_ai_api_key">API Key</string>
+    <string name="settings_ai_model">Model</string>
+    <string name="settings_schedule_reminder_section">提醒设置</string>
+    <string name="settings_task_reminder_toggle">任务提醒通知</string>
+    <string name="settings_reminder_method_title">默认提醒方式和铃声</string>
+    <string name="settings_choose_ringtone">选择铃声</string>
+    <string name="settings_vibrate_mode_hint">震动模式下不会播放铃声。</string>
+    <string name="settings_ringtone_default">系统默认通知铃声</string>
+    <string name="settings_tomato_focus_title">Tomato Focus</string>
+    <string name="settings_tomato_focus_enable">启用番茄专注休息提醒</string>
+    <string name="settings_tomato_focus_interval_title">提醒间隔</string>
+    <string name="settings_interval_minutes_value">%1$d 分钟</string>
+    <string name="settings_calendar_view_section">日历视图</string>
+    <string name="settings_display_week_count">显示周数</string>
+    <string name="settings_saved">设置已保存</string>
+
+    <string name="language_option_chinese">中文</string>
+    <string name="language_option_english">English</string>
+    <string name="reminder_method_sound">声音提醒</string>
+    <string name="reminder_method_vibrate">震动提醒</string>
+    <string name="notification_permission_granted">通知权限已开启</string>
+    <string name="notification_permission_denied">通知权限未开启，提醒可能无法显示</string>
+
+    <string name="notification_channel_normal_name">普通提醒</string>
+    <string name="notification_channel_normal_description">接近截止时的温和提醒</string>
+    <string name="notification_channel_important_name">重要提醒</string>
+    <string name="notification_channel_important_description">需要优先处理的事项</string>
+    <string name="notification_channel_urgent_name">紧急提醒</string>
+    <string name="notification_channel_urgent_description">即将到期或高优先级事项</string>
+    <string name="notification_channel_focus_name">番茄专注提醒</string>
+    <string name="notification_channel_focus_description">用于定时提醒你短暂休息</string>
+
+    <string name="task_reminder_title">校园待办提醒</string>
+    <string name="task_reminder_prefix">待办： </string>
+    <string name="task_reminder_body">截止时间快到了，记得及时处理。</string>
+    <string name="draft_reminder_title">候选箱草稿提醒</string>
+    <string name="draft_reminder_body">草稿“%1$s”临近截止。草稿不会自动提醒，请打开候选箱确认并加入正式待办。</string>
+    <string name="tomato_focus_notification_title">Tomato Focus</string>
+    <string name="tomato_focus_notification_body">你已经专注了 %1$d 分钟，起来活动一下，休息片刻吧。</string>
+
+    <string name="ai_missing_api_key">未配置 API Key。请先在设置页保存本地 AI 配置。</string>
+
+    <string name="add_candidate_title">导入候选</string>
+    <string name="add_candidate_heading">导入文本到候选箱</string>
+    <string name="add_candidate_description">粘贴通知、作业要求等文本即可。可使用 AI 辅助尝试结构化提取，最终以详情页为准。</string>
+    <string name="add_candidate_source_label">来源</string>
+    <string name="add_candidate_placeholder">粘贴或输入课程通知内容…</string>
+    <string name="add_candidate_input_required">请先输入内容</string>
+    <string name="add_candidate_ai_title_prefix">【标题】</string>
+    <string name="add_candidate_ai_course_prefix">【课程线索】</string>
+    <string name="add_candidate_ai_due_prefix">【截止(毫秒时间戳)】</string>
+    <string name="add_candidate_ai_type_prefix">【类型】</string>
+    <string name="add_candidate_ai_urgency_prefix">【提醒级别】</string>
+    <string name="add_candidate_ai_original_prefix">—— 原文 ——</string>
+    <string name="add_candidate_ai_loading">AI 正在解析…</string>
+    <string name="add_candidate_ai_action">AI 辅助解析</string>
+    <string name="add_candidate_ai_failed">AI 解析失败</string>
+    <string name="add_candidate_submit">生成候选</string>
+    <string name="add_candidate_source_wechat">微信（模拟）</string>
+    <string name="add_candidate_source_qq">QQ（模拟）</string>
+    <string name="add_candidate_source_zhihuishu">智慧树（模拟）</string>
+    <string name="add_candidate_source_chaoxing">学习通（模拟）</string>
+    <string name="add_candidate_source_portal">天大办公网（模拟）</string>
+    <string name="add_candidate_source_manual">手动输入</string>
 </resources>

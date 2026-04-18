@@ -6,6 +6,7 @@ import com.campus.todo.data.db.entity.Course
 import com.campus.todo.data.db.entity.Task
 import com.campus.todo.data.db.entity.TimetableSlot
 import com.campus.todo.data.repo.TodoRepository
+import com.campus.todo.data.settings.SettingsStore
 import com.campus.todo.util.TimeUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,27 +23,31 @@ data class CalendarUiState(
     val selectedDaySlots: List<TimetableSlot>,
     val coursesById: Map<Long, Course>,
     val selected: LocalDate,
-    val monthTitle: String
+    val monthTitle: String,
+    val displayWeekCount: Boolean
 )
 
 class CalendarViewModel(
-    repo: TodoRepository
+    repo: TodoRepository,
+    settingsStore: SettingsStore
 ) : ViewModel() {
 
     private val selected = MutableStateFlow(LocalDate.now())
-    private val monthFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)
 
     val state = combine(
         selected,
+        settingsStore.settingsFlow,
         repo.observeTimetable(),
         repo.observeCourses(),
         repo.observePendingTasks()
-    ) { sel, slots, courses, tasks ->
+    ) { sel, settings, slots, courses, tasks ->
         val today = LocalDate.now()
         val strip = (0L until 7L).map { today.plusDays(it) }
         val active = if (sel.isBefore(today)) today else sel
         val normalized = strip.find { it == active } ?: today
         val map = courses.associateBy { it.id }
+        val locale = Locale.getDefault()
+        val monthFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", locale)
 
         val selectedSlots = slots
             .filter { it.dayOfWeek == normalized.dayOfWeek.value }
@@ -62,7 +67,8 @@ class CalendarViewModel(
             selectedDaySlots = selectedSlots,
             coursesById = map,
             selected = normalized,
-            monthTitle = normalized.format(monthFormatter)
+            monthTitle = normalized.format(monthFormatter),
+            displayWeekCount = settings.displayWeekCount
         )
     }.stateIn(
         viewModelScope,
@@ -73,7 +79,8 @@ class CalendarViewModel(
             emptyList(),
             emptyMap(),
             LocalDate.now(),
-            LocalDate.now().format(monthFormatter)
+            LocalDate.now().format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())),
+            true
         )
     )
 

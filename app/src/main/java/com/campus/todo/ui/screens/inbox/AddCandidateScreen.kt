@@ -40,11 +40,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.campus.todo.R
 import com.campus.todo.data.db.entity.SourceKind
 import com.campus.todo.ui.AppViewModelFactory
 
@@ -55,15 +58,16 @@ fun AddCandidateScreen(
     onCreated: (Long) -> Unit,
     vm: AddCandidateViewModel = viewModel(factory = factory)
 ) {
+    val context = LocalContext.current
     var text by remember { mutableStateOf("") }
     val mockSources = remember {
         listOf(
-            SourceKind.WECHAT to "微信（模拟）",
-            SourceKind.QQ to "QQ（模拟）",
-            SourceKind.ZHIHUISHU to "智慧树（模拟）",
-            SourceKind.CHAOXING to "学习通（模拟）",
-            SourceKind.TJU_PORTAL to "天大办公网（模拟）",
-            SourceKind.MANUAL to "手动输入"
+            SourceKind.WECHAT to context.getString(R.string.add_candidate_source_wechat),
+            SourceKind.QQ to context.getString(R.string.add_candidate_source_qq),
+            SourceKind.ZHIHUISHU to context.getString(R.string.add_candidate_source_zhihuishu),
+            SourceKind.CHAOXING to context.getString(R.string.add_candidate_source_chaoxing),
+            SourceKind.TJU_PORTAL to context.getString(R.string.add_candidate_source_portal),
+            SourceKind.MANUAL to context.getString(R.string.add_candidate_source_manual)
         )
     }
     var expanded by remember { mutableStateOf(false) }
@@ -99,7 +103,7 @@ fun AddCandidateScreen(
                     onClick = onBack
                 )
                 Text(
-                    text = "Import Candidate",
+                    text = stringResource(R.string.add_candidate_title),
                     color = Color(0xFFF2F5FC),
                     fontSize = 30.sp,
                     fontWeight = FontWeight.SemiBold
@@ -108,13 +112,13 @@ fun AddCandidateScreen(
             }
 
             Text(
-                text = "Import text into Inbox",
+                text = stringResource(R.string.add_candidate_heading),
                 color = Color(0xFFF1A364),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Medium
             )
             Text(
-                "粘贴通知、作业要求等文本即可。可使用「AI 辅助」尝试结构化提取，最终以详情页为准。",
+                stringResource(R.string.add_candidate_description),
                 fontSize = 14.sp,
                 lineHeight = 21.sp,
                 color = Color(0xFFB9C2D8)
@@ -137,7 +141,7 @@ fun AddCandidateScreen(
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(
-                                text = "Source",
+                                text = stringResource(R.string.add_candidate_source_label),
                                 color = Color(0xFF9EA9C4),
                                 fontSize = 12.sp
                             )
@@ -177,7 +181,7 @@ fun AddCandidateScreen(
                 },
                 placeholder = {
                     Text(
-                        text = "Paste or type your course notice...",
+                        text = stringResource(R.string.add_candidate_placeholder),
                         color = Color(0xFF8E9AB5),
                         fontSize = 14.sp
                     )
@@ -210,7 +214,7 @@ fun AddCandidateScreen(
             SecondaryActionButton(
                 onClick = {
                     if (text.isBlank()) {
-                        aiError = "请先输入内容"
+                        aiError = context.getString(R.string.add_candidate_input_required)
                         return@SecondaryActionButton
                     }
                     aiLoading = true
@@ -220,24 +224,28 @@ fun AddCandidateScreen(
                         onOk = { s ->
                             aiLoading = false
                             val merged = buildString {
-                                s.title?.let { append("【标题】").append(it).append('\n') }
-                                s.courseHint?.let { append("【课程线索】").append(it).append('\n') }
-                                s.dueAtEpoch?.let { append("【截止(毫秒时间戳)】").append(it).append('\n') }
-                                s.taskType?.let { append("【类型】").append(it.name).append('\n') }
-                                s.urgency?.let { append("【提醒级别】").append(it.name).append('\n') }
-                                append('\n').append("—— 原文 ——\n").append(text)
+                                s.title?.let { append(context.getString(R.string.add_candidate_ai_title_prefix)).append(it).append('\n') }
+                                s.courseHint?.let { append(context.getString(R.string.add_candidate_ai_course_prefix)).append(it).append('\n') }
+                                s.dueAtEpoch?.let { append(context.getString(R.string.add_candidate_ai_due_prefix)).append(it).append('\n') }
+                                s.taskType?.let { append(context.getString(R.string.add_candidate_ai_type_prefix)).append(it.name).append('\n') }
+                                s.urgency?.let { append(context.getString(R.string.add_candidate_ai_urgency_prefix)).append(it.name).append('\n') }
+                                append('\n').append(context.getString(R.string.add_candidate_ai_original_prefix)).append('\n').append(text)
                             }
                             text = merged
                         },
                         onErr = { msg ->
                             aiLoading = false
-                            aiError = msg
+                            aiError = msg.ifBlank { context.getString(R.string.add_candidate_ai_failed) }
                         }
                     )
                 },
                 enabled = !aiLoading,
                 icon = Icons.Outlined.AutoAwesome,
-                label = if (aiLoading) "AI 正在解析..." else "AI 辅助解析（DeepSeek）"
+                label = if (aiLoading) {
+                    stringResource(R.string.add_candidate_ai_loading)
+                } else {
+                    stringResource(R.string.add_candidate_ai_action)
+                }
             ) {
                 if (aiLoading) {
                     CircularProgressIndicator(
@@ -256,7 +264,7 @@ fun AddCandidateScreen(
                     }
                 },
                 enabled = text.isNotBlank() && !aiLoading,
-                label = "生成候选"
+                label = stringResource(R.string.add_candidate_submit)
             ) {
                 if (aiLoading) {
                     CircularProgressIndicator(

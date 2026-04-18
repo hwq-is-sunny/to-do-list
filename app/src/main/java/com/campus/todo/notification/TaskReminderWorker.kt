@@ -9,6 +9,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.campus.todo.CampusTodoApp
 import com.campus.todo.MainActivity
+import com.campus.todo.R
 import com.campus.todo.data.db.entity.TaskStatus
 
 class TaskReminderWorker(
@@ -23,8 +24,11 @@ class TaskReminderWorker(
         val app = applicationContext.applicationContext as CampusTodoApp
         val task = app.repository.getTask(taskId) ?: return Result.success()
         if (task.status != TaskStatus.PENDING) return Result.success()
+        val settings = app.settingsStore.currentSettings()
+        if (!settings.taskReminderEnabled) return Result.success()
+        TodoNotificationChannels.ensureAll(applicationContext, settings)
 
-        val channelId = TodoNotificationChannels.channelIdFor(task.urgency)
+        val channelId = TodoNotificationChannels.taskChannelIdFor(task.urgency, settings)
         val open = Intent(applicationContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -36,16 +40,17 @@ class TaskReminderWorker(
         )
 
         val text = buildString {
-            append("待办: ")
+            append(applicationContext.getString(R.string.task_reminder_prefix))
             append(task.title)
             task.dueAtEpoch?.let {
-                append("\n截止临近，记得处理就好。")
+                append('\n')
+                append(applicationContext.getString(R.string.task_reminder_body))
             }
         }
 
         val notif = NotificationCompat.Builder(applicationContext, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("校园待办")
+            .setContentTitle(applicationContext.getString(R.string.task_reminder_title))
             .setContentText(task.title)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(pi)
@@ -62,10 +67,12 @@ class TaskReminderWorker(
             )
             .build()
 
-        NotificationManagerCompat.from(applicationContext).notify(
-            NOTIF_BASE_ID + (taskId % 1_000_000).toInt(),
-            notif
-        )
+        runCatching {
+            NotificationManagerCompat.from(applicationContext).notify(
+                NOTIF_BASE_ID + (taskId % 1_000_000).toInt(),
+                notif
+            )
+        }
         return Result.success()
     }
 

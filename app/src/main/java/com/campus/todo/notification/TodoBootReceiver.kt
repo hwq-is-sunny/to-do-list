@@ -21,6 +21,7 @@ class TodoBootReceiver : BroadcastReceiver() {
                 val repo = app.repository
                 val sched = app.reminderScheduler
                 repo.getAllPendingWithDue().forEach { sched.rescheduleTask(it) }
+                sched.syncTomatoFocus()
             } finally {
                 pending.finish()
             }
