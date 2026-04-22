@@ -141,6 +141,7 @@
     <string name="timetable_import_mode_reserved">教务系统导入 / 文件导入（即将支持）</string>
     <string name="timetable_import_course_name">课程名称</string>
     <string name="timetable_import_teacher">教师（可选）</string>
+    <string name="timetable_import_day_of_week">星期（一至日）</string>
     <string name="timetable_import_start_time">开始时间（如 08:00）</string>
     <string name="timetable_import_end_time">结束时间（如 09:40）</string>
     <string name="timetable_import_start_period">开始节次（可选）</string>

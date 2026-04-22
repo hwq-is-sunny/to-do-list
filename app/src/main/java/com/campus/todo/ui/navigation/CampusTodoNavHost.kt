@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -348,6 +349,7 @@ private fun PremiumBottomBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .padding(start = 22.dp, end = 22.dp, bottom = 14.dp)
     ) {
         Box(
@@ -362,7 +364,7 @@ private fun PremiumBottomBar(
                     )
                 )
                 .border(1.dp, Color(0x28FFFFFF), barShape)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 8.dp),
             contentAlignment = Alignment.Center
         ) {
             Box(
@@ -374,10 +376,13 @@ private fun PremiumBottomBar(
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     BottomIcon(
                         selected = currentRoute == NavRoutes.TODAY,
                         icon = Icons.Outlined.Home,
@@ -389,8 +394,12 @@ private fun PremiumBottomBar(
                         onClick = { onNavigate(NavRoutes.CALENDAR) }
                     )
                 }
-                Spacer(modifier = Modifier.width(84.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Spacer(modifier = Modifier.width(64.dp))
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     BottomIcon(
                         selected = currentRoute == NavRoutes.COURSES,
                         icon = Icons.Outlined.MenuBook,
