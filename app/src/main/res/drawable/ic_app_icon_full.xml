@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="@color/launcher_icon_background_shadow"
+        android:fillAlpha="0.28"
+        android:pathData="M36,20H72A18,18 0 0,1 90,38V74A18,18 0 0,1 72,92H36A18,18 0 0,1 18,74V38A18,18 0 0,1 36,20Z" />
+    <path
+        android:fillColor="@color/launcher_icon_background"
+        android:pathData="M36,18H72A18,18 0 0,1 90,36V72A18,18 0 0,1 72,90H36A18,18 0 0,1 18,72V36A18,18 0 0,1 36,18Z" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M36,18H72A18,18 0 0,1 90,36V72A18,18 0 0,1 72,90H36A18,18 0 0,1 18,72V36A18,18 0 0,1 36,18Z"
+        android:strokeColor="@color/launcher_icon_background_stroke"
+        android:strokeAlpha="0.9"
+        android:strokeWidth="1.5" />
+    <path
+        android:fillColor="@color/launcher_icon_accent"
+        android:pathData="M54,54m-21,0a21,21 0,1 1,42 0a21,21 0,1 1,-42 0" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M43,54l8,8 15,-15"
+        android:strokeColor="@color/launcher_icon_check"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="8" />
+</vector>
