@@ -284,6 +284,20 @@ fun SettingsScreen(
                         }
                     )
                     GroupDivider()
+                    SettingsSwitchRow(
+                        title = stringResource(R.string.settings_deadline_vibrate),
+                        subtitle = stringResource(R.string.settings_deadline_vibrate_hint),
+                        checked = state.settings.deadlineVibrateEnabled,
+                        onCheckedChange = vm::setDeadlineVibrateEnabled
+                    )
+                    GroupDivider()
+                    SettingsSwitchRow(
+                        title = stringResource(R.string.settings_deadline_strong),
+                        subtitle = stringResource(R.string.settings_deadline_strong_hint),
+                        checked = state.settings.deadlineStrongReminderEnabled,
+                        onCheckedChange = vm::setDeadlineStrongReminderEnabled
+                    )
+                    GroupDivider()
                     SettingsArrowRow(
                         title = "默认提醒方式与铃声",
                         trailingText = reminderMethodLabel(state.settings.reminderMethod),

@@ -10,6 +10,7 @@ import com.campus.todo.data.repo.TodoRepository
 import com.campus.todo.data.settings.AppSettings
 import com.campus.todo.data.settings.SettingsStore
 import com.campus.todo.data.session.SessionStore
+import com.campus.todo.notification.TaskReminderScheduler
 import com.campus.todo.util.TimeUtils
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -26,13 +27,15 @@ data class TodayUiState(
     val upcomingTasks: List<Task>,
     val allPending: List<Task>,
     /** 含已完成，用于统计与归档视图 */
-    val allTasks: List<Task>
+    val allTasks: List<Task>,
+    val showCompletedTasks: Boolean
 )
 
 class TodayViewModel(
     private val repo: TodoRepository,
     private val settingsStore: SettingsStore,
-    private val sessionStore: SessionStore
+    private val sessionStore: SessionStore,
+    private val reminderScheduler: TaskReminderScheduler
 ) : ViewModel() {
 
     private val today = LocalDate.now()
@@ -68,7 +71,8 @@ class TodayViewModel(
             tasksDueToday = dueToday.sortedBy { it.dueAtEpoch },
             upcomingTasks = upcoming,
             allPending = pending,
-            allTasks = all
+            allTasks = all,
+            showCompletedTasks = settings.showCompletedTasks
         )
     }.stateIn(
         viewModelScope,
@@ -81,16 +85,23 @@ class TodayViewModel(
             tasksDueToday = emptyList(),
             upcomingTasks = emptyList(),
             allPending = emptyList(),
-            allTasks = emptyList()
+            allTasks = emptyList(),
+            showCompletedTasks = true
         )
     )
 
     fun markDone(taskId: Long) {
-        viewModelScope.launch { repo.markTaskDone(taskId) }
+        viewModelScope.launch {
+            repo.markTaskDone(taskId)
+            reminderScheduler.cancelTask(taskId)
+        }
     }
 
     fun deleteTask(taskId: Long) {
-        viewModelScope.launch { repo.deleteTask(taskId) }
+        viewModelScope.launch {
+            reminderScheduler.cancelTask(taskId)
+            repo.deleteTask(taskId)
+        }
     }
 
     fun renameTask(taskId: Long, title: String) {

@@ -11,11 +11,20 @@ import com.campus.todo.data.db.entity.UrgencyLevel
 import com.campus.todo.data.settings.AppSettings
 import com.campus.todo.data.settings.ReminderMethod
 
+enum class TaskDeadlineNotifyPhase {
+    AT_24H,
+    AT_2H,
+    AT_30M
+}
+
 object TodoNotificationChannels {
     private const val NORMAL_BASE = "campus_todo_normal"
     private const val IMPORTANT_BASE = "campus_todo_important"
     private const val URGENT_BASE = "campus_todo_urgent"
     private const val FOCUS_BASE = "campus_todo_focus"
+    private const val DEADLINE_24H_ID = "campus_todo_deadline_24h"
+    private const val DEADLINE_2H_ID = "campus_todo_deadline_2h"
+    private const val DEADLINE_30M_ID = "campus_todo_deadline_30m"
 
     fun ensureAll(context: Context, settings: AppSettings) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -53,6 +62,55 @@ object TodoNotificationChannels {
                     vibrationPattern = longArrayOf(0L)
                 }
             }
+        }
+
+        fun deadline24hConfigure(ch: NotificationChannel) {
+            when (settings.reminderMethod) {
+                ReminderMethod.SOUND, ReminderMethod.SOUND_AND_VIBRATE -> {
+                    ch.setSound(ringtoneUri, audioAttributes)
+                    ch.enableVibration(false)
+                    ch.vibrationPattern = longArrayOf(0L)
+                }
+                ReminderMethod.VIBRATE, ReminderMethod.SILENT -> {
+                    ch.setSound(null, null)
+                    ch.enableVibration(false)
+                    ch.vibrationPattern = longArrayOf(0L)
+                }
+            }
+        }
+
+        fun deadline2hConfigure(ch: NotificationChannel) {
+            val wantVib = settings.deadlineVibrateEnabled
+            when (settings.reminderMethod) {
+                ReminderMethod.SOUND -> {
+                    ch.setSound(ringtoneUri, audioAttributes)
+                    ch.enableVibration(wantVib)
+                    ch.vibrationPattern =
+                        if (wantVib) longArrayOf(0L, 400L, 200L, 400L) else longArrayOf(0L)
+                }
+                ReminderMethod.SOUND_AND_VIBRATE -> {
+                    ch.setSound(ringtoneUri, audioAttributes)
+                    ch.enableVibration(wantVib)
+                    ch.vibrationPattern =
+                        if (wantVib) longArrayOf(0L, 400L, 200L, 400L) else longArrayOf(0L)
+                }
+                ReminderMethod.VIBRATE -> {
+                    ch.setSound(null, null)
+                    ch.enableVibration(wantVib)
+                    ch.vibrationPattern =
+                        if (wantVib) longArrayOf(0L, 400L, 200L, 400L) else longArrayOf(0L)
+                }
+                ReminderMethod.SILENT -> {
+                    ch.setSound(null, null)
+                    ch.enableVibration(wantVib)
+                    ch.vibrationPattern =
+                        if (wantVib) longArrayOf(0L, 400L, 200L, 400L) else longArrayOf(0L)
+                }
+            }
+        }
+
+        fun deadline30mConfigure(ch: NotificationChannel) {
+            deadline2hConfigure(ch)
         }
 
         nm.createNotificationChannel(
@@ -95,6 +153,41 @@ object TodoNotificationChannels {
                 configureAlerts()
             }
         )
+        nm.createNotificationChannel(
+            NotificationChannel(
+                DEADLINE_24H_ID,
+                context.getString(R.string.notification_channel_deadline_24h_name),
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = context.getString(R.string.notification_channel_deadline_24h_description)
+                deadline24hConfigure(this)
+            }
+        )
+        nm.createNotificationChannel(
+            NotificationChannel(
+                DEADLINE_2H_ID,
+                context.getString(R.string.notification_channel_deadline_2h_name),
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = context.getString(R.string.notification_channel_deadline_2h_description)
+                deadline2hConfigure(this)
+            }
+        )
+        val importance30m = if (settings.deadlineStrongReminderEnabled) {
+            NotificationManager.IMPORTANCE_HIGH
+        } else {
+            NotificationManager.IMPORTANCE_DEFAULT
+        }
+        nm.createNotificationChannel(
+            NotificationChannel(
+                DEADLINE_30M_ID,
+                context.getString(R.string.notification_channel_deadline_30m_name),
+                importance30m
+            ).apply {
+                description = context.getString(R.string.notification_channel_deadline_30m_description)
+                deadline30mConfigure(this)
+            }
+        )
     }
 
     fun taskChannelIdFor(level: UrgencyLevel, settings: AppSettings): String = when (level) {
@@ -105,6 +198,12 @@ object TodoNotificationChannels {
 
     fun focusChannelIdFor(settings: AppSettings): String =
         channelId(FOCUS_BASE, settings.reminderMethod)
+
+    fun deadlineChannelIdFor(phase: TaskDeadlineNotifyPhase): String = when (phase) {
+        TaskDeadlineNotifyPhase.AT_24H -> DEADLINE_24H_ID
+        TaskDeadlineNotifyPhase.AT_2H -> DEADLINE_2H_ID
+        TaskDeadlineNotifyPhase.AT_30M -> DEADLINE_30M_ID
+    }
 
     private fun channelId(base: String, method: ReminderMethod): String =
         "${base}_${method.name.lowercase()}"
@@ -125,6 +224,9 @@ object TodoNotificationChannels {
         channelId(FOCUS_BASE, ReminderMethod.SOUND),
         channelId(FOCUS_BASE, ReminderMethod.VIBRATE),
         channelId(FOCUS_BASE, ReminderMethod.SOUND_AND_VIBRATE),
-        channelId(FOCUS_BASE, ReminderMethod.SILENT)
+        channelId(FOCUS_BASE, ReminderMethod.SILENT),
+        DEADLINE_24H_ID,
+        DEADLINE_2H_ID,
+        DEADLINE_30M_ID
     )
 }

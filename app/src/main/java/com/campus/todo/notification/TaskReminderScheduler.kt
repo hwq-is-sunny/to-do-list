@@ -2,13 +2,12 @@ package com.campus.todo.notification
 
 import android.content.Context
 import androidx.work.Data
-import androidx.work.ExistingWorkPolicy
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.campus.todo.data.db.entity.Task
-import com.campus.todo.data.db.entity.UrgencyLevel
 import com.campus.todo.data.settings.SettingsStore
 import kotlinx.coroutines.runBlocking
 import java.time.Duration
@@ -21,55 +20,54 @@ class TaskReminderScheduler(
 
     fun rescheduleTask(task: Task) {
         cancelTask(task.id)
-        if (!runBlocking {
-                val settings = settingsStore.currentSettings()
-                settings.taskReminderEnabled && settings.notificationsEnabled
-            }
-        ) return
+        if (!remindersGloballyEnabled()) return
         val due = task.dueAtEpoch ?: return
-        val leadMs = when (task.urgency) {
-            UrgencyLevel.NORMAL -> Duration.ofHours(24)
-            UrgencyLevel.IMPORTANT -> Duration.ofHours(6)
-            UrgencyLevel.URGENT -> Duration.ofHours(1)
-        }.toMillis()
-        var fireAt = due - leadMs
         val now = System.currentTimeMillis()
-        if (fireAt <= now) {
-            fireAt = now + MIN_DELAY_MS
-        }
+        schedulePhase(task.id, due, now, TaskReminderWorker.PHASE_24H, Duration.ofHours(24).toMillis())
+        schedulePhase(task.id, due, now, TaskReminderWorker.PHASE_2H, Duration.ofHours(2).toMillis())
+        schedulePhase(task.id, due, now, TaskReminderWorker.PHASE_30M, Duration.ofMinutes(30).toMillis())
+    }
+
+    private fun schedulePhase(taskId: Long, dueAt: Long, now: Long, phase: String, leadMs: Long) {
+        var fireAt = dueAt - leadMs
+        if (fireAt <= now) return
+        if (fireAt >= dueAt) return
         val delay = fireAt - now
-        val data = Data.Builder().putLong(TaskReminderWorker.KEY_TASK_ID, task.id).build()
+        val workDelay = delay.coerceAtLeast(MIN_WORK_DELAY_MS)
+        val data = Data.Builder()
+            .putLong(TaskReminderWorker.KEY_TASK_ID, taskId)
+            .putString(TaskReminderWorker.KEY_PHASE, phase)
+            .build()
         val request = OneTimeWorkRequestBuilder<TaskReminderWorker>()
-            .setInitialDelay(Duration.ofMillis(delay))
+            .setInitialDelay(Duration.ofMillis(workDelay))
             .setInputData(data)
             .build()
         WorkManager.getInstance(context).enqueueUniqueWork(
-            uniqueName(task.id),
+            uniqueName(taskId, phase),
             ExistingWorkPolicy.REPLACE,
             request
         )
     }
 
     fun cancelTask(taskId: Long) {
-        WorkManager.getInstance(context).cancelUniqueWork(uniqueName(taskId))
+        val wm = WorkManager.getInstance(context)
+        wm.cancelUniqueWork(uniqueName(taskId, TaskReminderWorker.PHASE_24H))
+        wm.cancelUniqueWork(uniqueName(taskId, TaskReminderWorker.PHASE_2H))
+        wm.cancelUniqueWork(uniqueName(taskId, TaskReminderWorker.PHASE_30M))
     }
 
     /** Remind user that draft candidates do not trigger formal task reminders until confirmed. */
     fun scheduleDraftReminder(candidateId: Long, dueEpoch: Long) {
         cancelDraftReminder(candidateId)
-        if (!runBlocking {
-                val settings = settingsStore.currentSettings()
-                settings.taskReminderEnabled && settings.notificationsEnabled
-            }
-        ) return
+        if (!remindersGloballyEnabled()) return
         val leadMs = Duration.ofHours(24).toMillis()
         var fireAt = dueEpoch - leadMs
         val now = System.currentTimeMillis()
         if (fireAt <= now) {
-            fireAt = now + MIN_DELAY_MS
+            fireAt = now + MIN_WORK_DELAY_MS
         }
         if (fireAt >= dueEpoch) {
-            fireAt = (dueEpoch - MIN_DELAY_MS).coerceAtLeast(now + MIN_DELAY_MS)
+            fireAt = (dueEpoch - MIN_WORK_DELAY_MS).coerceAtLeast(now + MIN_WORK_DELAY_MS)
         }
         val delay = fireAt - now
         val data = Data.Builder()
@@ -91,11 +89,7 @@ class TaskReminderScheduler(
     }
 
     fun syncPendingTaskReminders(tasks: List<Task>) {
-        if (runBlocking {
-                val settings = settingsStore.currentSettings()
-                settings.taskReminderEnabled && settings.notificationsEnabled
-            }
-        ) {
+        if (remindersGloballyEnabled()) {
             tasks.forEach(::rescheduleTask)
         } else {
             tasks.forEach { cancelTask(it.id) }
@@ -140,10 +134,15 @@ class TaskReminderScheduler(
         )
     }
 
+    private fun remindersGloballyEnabled(): Boolean = runBlocking {
+        val settings = settingsStore.currentSettings()
+        settings.taskReminderEnabled && settings.notificationsEnabled
+    }
+
     companion object {
-        private const val MIN_DELAY_MS = 15_000L
+        private const val MIN_WORK_DELAY_MS = 5_000L
         private const val TOMATO_FOCUS_WORK_NAME = "tomato_focus_reminder"
-        fun uniqueName(taskId: Long) = "task_reminder_$taskId"
+        fun uniqueName(taskId: Long, phase: String) = "task_reminder_${taskId}_$phase"
         fun draftUniqueName(candidateId: Long) = "candidate_draft_reminder_$candidateId"
     }
 }

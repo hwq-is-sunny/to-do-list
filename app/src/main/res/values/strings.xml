@@ -95,10 +95,26 @@
     <string name="notification_channel_urgent_description">即将到期或高优先级事项</string>
     <string name="notification_channel_focus_name">番茄专注提醒</string>
     <string name="notification_channel_focus_description">用于定时提醒你短暂休息</string>
+    <string name="notification_channel_deadline_24h_name">任务截止·提前一天</string>
+    <string name="notification_channel_deadline_24h_description">截止前 24 小时的普通提醒</string>
+    <string name="notification_channel_deadline_2h_name">任务截止·提前 2 小时</string>
+    <string name="notification_channel_deadline_2h_description">临近截止的提醒与震动</string>
+    <string name="notification_channel_deadline_30m_name">任务截止·强提醒</string>
+    <string name="notification_channel_deadline_30m_description">截止前 30 分钟的强提醒</string>
 
     <string name="task_reminder_title">校园待办提醒</string>
     <string name="task_reminder_prefix">待办： </string>
     <string name="task_reminder_body">截止时间快到了，记得及时处理。</string>
+    <string name="task_reminder_24h_body">距离截止还有约 24 小时。</string>
+    <string name="task_reminder_2h_body">距离截止还有约 2 小时，请尽快处理。</string>
+    <string name="task_reminder_30m_body">距离截止还有约 30 分钟！</string>
+    <string name="settings_deadline_vibrate">震动提醒</string>
+    <string name="settings_deadline_vibrate_hint">截止前 2 小时与 30 分钟提醒是否震动（受系统勿扰影响）</string>
+    <string name="settings_deadline_strong">强提醒</string>
+    <string name="settings_deadline_strong_hint">截止前 30 分钟使用更高优先级提醒</string>
+    <string name="deadline_chip_near">临近截止</string>
+    <string name="deadline_chip_urgent">紧急</string>
+    <string name="deadline_chip_overdue">已逾期</string>
     <string name="draft_reminder_title">候选箱草稿提醒</string>
     <string name="draft_reminder_body">草稿“%1$s”临近截止。草稿不会自动提醒，请打开候选箱确认并加入正式待办。</string>
     <string name="tomato_focus_notification_title">番茄专注</string>
