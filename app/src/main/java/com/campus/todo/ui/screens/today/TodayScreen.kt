@@ -52,16 +52,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.campus.todo.R
 import com.campus.todo.data.db.entity.Task
 import com.campus.todo.data.db.entity.TaskStatus
 import com.campus.todo.ui.AppViewModelFactory
+import com.campus.todo.util.TaskDeadlineTier
 import com.campus.todo.util.TimeUtils
+import com.campus.todo.util.comparePendingTasksByDeadlineTier
+import com.campus.todo.util.deadlineTier
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -81,11 +86,19 @@ private val CardMuted = Color(0xFF101628)
 /** 问候语等与「校园场景」一致的展示时区（北京时间）。 */
 private val BeijingZoneId: ZoneId = ZoneId.of("Asia/Shanghai")
 
+private enum class HomeDeadlineBadge {
+    NEAR,
+    URGENT,
+    OVERDUE
+}
+
 private data class HomeTaskVisual(
     val id: Long,
     val title: String,
     val subtitle: String,
     val timeLabel: String,
+    val badge: HomeDeadlineBadge? = null,
+    val isCompleted: Boolean = false,
 )
 
 private enum class HomeMode {
@@ -109,7 +122,8 @@ fun TodayScreen(
         tasksDueToday = emptyList(),
         upcomingTasks = emptyList(),
         allPending = emptyList(),
-        allTasks = emptyList()
+        allTasks = emptyList(),
+        showCompletedTasks = true
     ))
     val today = remember { LocalDate.now() }
     val thisMonth = remember(today) { YearMonth.from(today) }
@@ -170,27 +184,58 @@ fun TodayScreen(
         }
     }
 
-    val taskItems = remember(pendingForSelection, taskSubtitle) {
-        pendingForSelection.sortedBy { it.dueAtEpoch ?: Long.MAX_VALUE }.map { task ->
+    val pendingSorted = remember(pendingForSelection) {
+        val now = System.currentTimeMillis()
+        pendingForSelection.sortedWith(comparePendingTasksByDeadlineTier(now))
+    }
+    val doneSorted = remember(doneForSelection) {
+        doneForSelection.sortedByDescending { it.completedAtEpoch ?: 0L }
+    }
+    val listForAllTasks = remember(pendingSorted, doneSorted, state.showCompletedTasks) {
+        if (state.showCompletedTasks) pendingSorted + doneSorted else pendingSorted
+    }
+
+    val taskItems = remember(listForAllTasks, taskSubtitle) {
+        val now = System.currentTimeMillis()
+        listForAllTasks.map { task ->
+            val badge = if (task.status == TaskStatus.DONE) {
+                null
+            } else {
+                when (task.deadlineTier(now)) {
+                    TaskDeadlineTier.NEAR_DUE -> HomeDeadlineBadge.NEAR
+                    TaskDeadlineTier.URGENT -> HomeDeadlineBadge.URGENT
+                    TaskDeadlineTier.OVERDUE -> HomeDeadlineBadge.OVERDUE
+                    TaskDeadlineTier.NORMAL -> null
+                }
+            }
             HomeTaskVisual(
                 id = task.id,
                 title = task.title,
-                subtitle = taskSubtitle,
+                subtitle = if (task.status == TaskStatus.DONE) "已完成" else taskSubtitle,
                 timeLabel = task.dueAtEpoch?.let { TimeUtils.formatEpoch(it).substringAfter(" ") } ?: "--:--",
+                badge = badge,
+                isCompleted = task.status == TaskStatus.DONE
             )
         }
     }
 
-    val priorityItems = remember(pendingForSelection, taskSubtitle) {
-        pendingForSelection
-            .sortedWith(compareByDescending<Task> { it.urgency.ordinal }.thenBy { it.dueAtEpoch ?: Long.MAX_VALUE })
+    val priorityItems = remember(pendingSorted, taskSubtitle) {
+        val now = System.currentTimeMillis()
+        pendingSorted
             .take(4)
             .map { task ->
+                val badge = when (task.deadlineTier(now)) {
+                    TaskDeadlineTier.NEAR_DUE -> HomeDeadlineBadge.NEAR
+                    TaskDeadlineTier.URGENT -> HomeDeadlineBadge.URGENT
+                    TaskDeadlineTier.OVERDUE -> HomeDeadlineBadge.OVERDUE
+                    TaskDeadlineTier.NORMAL -> null
+                }
                 HomeTaskVisual(
                     id = task.id,
                     title = task.title,
                     subtitle = taskSubtitle,
                     timeLabel = task.dueAtEpoch?.let { TimeUtils.formatEpoch(it).substringAfter(" ") } ?: "--:--",
+                    badge = badge
                 )
             }
     }
@@ -349,7 +394,7 @@ fun TodayScreen(
                                 AllTaskItem(
                                     item = task,
                                     onOpen = { onOpenTask(task.id) },
-                                    onMarkDone = { vm.markDone(task.id) },
+                                    onMarkDone = { if (!task.isCompleted) vm.markDone(task.id) },
                                     onEdit = {
                                         editingTask = task
                                         editingTitle = task.title
@@ -685,6 +730,13 @@ private fun PriorityPanel(
     onMarkDone: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    @Composable
+    fun badgeStyle(b: HomeDeadlineBadge?): Pair<String?, Color> = when (b) {
+        HomeDeadlineBadge.NEAR -> stringResource(R.string.deadline_chip_near) to Color(0xFFB85A12)
+        HomeDeadlineBadge.URGENT -> stringResource(R.string.deadline_chip_urgent) to Color(0xFF9C3010)
+        HomeDeadlineBadge.OVERDUE -> stringResource(R.string.deadline_chip_overdue) to Color(0xFF8B1A1A)
+        null -> null to Color.Transparent
+    }
     val cardHorizontalPadding = 14.dp
     val cardVerticalPadding = 12.dp
     Box(
@@ -708,21 +760,38 @@ private fun PriorityPanel(
                 )
             } else {
                 tasks.forEach { item ->
+                    val (badgeText, badgeColor) = badgeStyle(item.badge)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = item.title,
-                            color = Color(0xFF1B2A11),
-                            fontSize = 15.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                        Row(
                             modifier = Modifier
                                 .weight(1f)
-                                .clickable { onOpenTask(item.id) }
-                        )
+                                .clickable { onOpenTask(item.id) },
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = item.title,
+                                color = Color(0xFF1B2A11),
+                                fontSize = 15.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            if (badgeText != null) {
+                                Text(
+                                    text = badgeText,
+                                    color = badgeColor,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
                         Text(
                             text = "完成",
                             color = Color(0xFF3D4E2A),
@@ -808,6 +877,24 @@ private fun AllTaskItem(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val badgeLabel = when (item.badge) {
+        HomeDeadlineBadge.NEAR -> stringResource(R.string.deadline_chip_near)
+        HomeDeadlineBadge.URGENT -> stringResource(R.string.deadline_chip_urgent)
+        HomeDeadlineBadge.OVERDUE -> stringResource(R.string.deadline_chip_overdue)
+        null -> null
+    }
+    val badgeBg = when (item.badge) {
+        HomeDeadlineBadge.NEAR -> Color(0x33F08B4A)
+        HomeDeadlineBadge.URGENT -> Color(0x33E85D3B)
+        HomeDeadlineBadge.OVERDUE -> Color(0x33E04545)
+        null -> Color.Transparent
+    }
+    val badgeFg = when (item.badge) {
+        HomeDeadlineBadge.NEAR -> Color(0xFFF08B4A)
+        HomeDeadlineBadge.URGENT -> Color(0xFFFF7A52)
+        HomeDeadlineBadge.OVERDUE -> Color(0xFFFF6B6B)
+        null -> Color.Transparent
+    }
     var menuExpanded by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -832,16 +919,34 @@ private fun AllTaskItem(
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(1.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(
-                    text = item.title,
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = item.title,
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (badgeLabel != null) {
+                        Text(
+                            text = badgeLabel,
+                            color = badgeFg,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(badgeBg)
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                }
                 Text(
                     text = item.subtitle,
                     color = Color(0xFF8B94AA),
@@ -866,7 +971,8 @@ private fun AllTaskItem(
                         onClick = {
                             menuExpanded = false
                             onMarkDone()
-                        }
+                        },
+                        enabled = !item.isCompleted
                     )
                     DropdownMenuItem(
                         text = { Text("编辑") },

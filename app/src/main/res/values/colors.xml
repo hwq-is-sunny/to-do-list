@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="launcher_icon_backdrop_top">#081022</color>
+    <color name="launcher_icon_backdrop_bottom">#0D1330</color>
+    <color name="launcher_splash_background">#0B1024</color>
+    <color name="launcher_icon_background">#121735</color>
+    <color name="launcher_icon_background_shadow">#0A1026</color>
+    <color name="launcher_icon_background_stroke">#223257</color>
+    <color name="launcher_icon_accent">#F58B2A</color>
+    <color name="launcher_icon_check">#11162F</color>
+</resources>

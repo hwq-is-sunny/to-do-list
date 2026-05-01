@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.campus.todo.R
 import com.campus.todo.ui.AppViewModelFactory
+import com.campus.todo.util.MinuteParse
 import kotlinx.coroutines.launch
 
 @Composable
@@ -481,6 +482,62 @@ private fun DraftEditorCard(
             value = draft.courseName,
             onValueChange = { onUpdate(draft.copy(courseName = it)) },
             label = stringResource(R.string.timetable_import_course_name)
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = stringResource(R.string.timetable_import_day_of_week),
+                color = Color(0xFFDCE3F6),
+                fontSize = 13.sp
+            )
+            DaySelector(
+                selected = draft.dayOfWeek,
+                onSelected = { d -> onUpdate(draft.copy(dayOfWeek = d)) }
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            ImportInputField(
+                value = MinuteParse.formatMinuteOfDay(draft.startMinute),
+                onValueChange = { v ->
+                    MinuteParse.parseMinuteOfDay(v.trim().replace('：', ':'))?.let { m ->
+                        onUpdate(draft.copy(startMinute = m))
+                    }
+                },
+                label = stringResource(R.string.timetable_import_start_time),
+                modifier = Modifier.weight(1f)
+            )
+            ImportInputField(
+                value = MinuteParse.formatMinuteOfDay(draft.endMinute),
+                onValueChange = { v ->
+                    MinuteParse.parseMinuteOfDay(v.trim().replace('：', ':'))?.let { m ->
+                        onUpdate(draft.copy(endMinute = m))
+                    }
+                },
+                label = stringResource(R.string.timetable_import_end_time),
+                modifier = Modifier.weight(1f)
+            )
+        }
+        WeekModeSelector(
+            selected = draft.weekMode,
+            onSelected = { wm -> onUpdate(draft.copy(weekMode = wm)) }
+        )
+        val requiredType = stringResource(R.string.timetable_import_course_type_required)
+        val electiveType = stringResource(R.string.timetable_import_course_type_elective)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ImportModeChip(
+                text = requiredType,
+                selected = draft.courseType == requiredType,
+                onClick = { onUpdate(draft.copy(courseType = requiredType)) }
+            )
+            ImportModeChip(
+                text = electiveType,
+                selected = draft.courseType == electiveType,
+                onClick = { onUpdate(draft.copy(courseType = electiveType)) }
+            )
+        }
+        ImportInputField(
+            value = draft.courseType,
+            onValueChange = { onUpdate(draft.copy(courseType = it)) },
+            label = stringResource(R.string.timetable_import_course_type)
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ImportInputField(

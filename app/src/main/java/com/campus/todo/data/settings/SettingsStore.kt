@@ -62,7 +62,11 @@ data class AppSettings(
     val defaultHomeTab: String = "today",
     val showCompletedTasks: Boolean = true,
     /** 是否将微信/QQ/知到等应用通知写入候选箱（需系统「通知使用权」） */
-    val notificationImportEnabled: Boolean = false
+    val notificationImportEnabled: Boolean = false,
+    /** 截止前 2 小时 / 30 分钟提醒是否使用震动 */
+    val deadlineVibrateEnabled: Boolean = true,
+    /** 截止前 30 分钟是否使用强提醒（更高优先级与通道） */
+    val deadlineStrongReminderEnabled: Boolean = true
 ) {
     fun selectedLanguage(systemLanguage: AppLanguage): AppLanguage =
         if (languageTag.isBlank()) systemLanguage else AppLanguage.fromTag(languageTag)
@@ -103,6 +107,8 @@ class SettingsStore(private val context: Context) {
     private val keyDefaultHomeTab = stringPreferencesKey("default_home_tab")
     private val keyShowCompletedTasks = booleanPreferencesKey("show_completed_tasks")
     private val keyNotificationImportEnabled = booleanPreferencesKey("notification_import_enabled")
+    private val keyDeadlineVibrateEnabled = booleanPreferencesKey("deadline_vibrate_enabled")
+    private val keyDeadlineStrongReminderEnabled = booleanPreferencesKey("deadline_strong_reminder_enabled")
 
     val settingsFlow = context.settingsDataStore.data.map { prefs ->
         val rawLang = prefs[keyLanguageTag].orEmpty().ifBlank { AppLanguage.CHINESE.tag }
@@ -132,7 +138,9 @@ class SettingsStore(private val context: Context) {
             defaultReminderMinutes = sanitizeInterval(prefs[keyDefaultReminderMinutes] ?: 30),
             defaultHomeTab = prefs[keyDefaultHomeTab].orEmpty().ifBlank { "today" },
             showCompletedTasks = prefs[keyShowCompletedTasks] ?: true,
-            notificationImportEnabled = prefs[keyNotificationImportEnabled] ?: false
+            notificationImportEnabled = prefs[keyNotificationImportEnabled] ?: false,
+            deadlineVibrateEnabled = prefs[keyDeadlineVibrateEnabled] ?: true,
+            deadlineStrongReminderEnabled = prefs[keyDeadlineStrongReminderEnabled] ?: true
         )
     }
 
@@ -291,6 +299,18 @@ class SettingsStore(private val context: Context) {
     suspend fun setNotificationImportEnabled(enabled: Boolean) {
         context.settingsDataStore.edit { prefs ->
             prefs[keyNotificationImportEnabled] = enabled
+        }
+    }
+
+    suspend fun setDeadlineVibrateEnabled(enabled: Boolean) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[keyDeadlineVibrateEnabled] = enabled
+        }
+    }
+
+    suspend fun setDeadlineStrongReminderEnabled(enabled: Boolean) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[keyDeadlineStrongReminderEnabled] = enabled
         }
     }
 

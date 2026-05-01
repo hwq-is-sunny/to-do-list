@@ -34,7 +34,7 @@ class AppViewModelFactory(
         val sched = app.reminderScheduler
         return when {
             modelClass.isAssignableFrom(TodayViewModel::class.java) ->
-                TodayViewModel(repo, app.settingsStore, app.sessionStore) as T
+                TodayViewModel(repo, app.settingsStore, app.sessionStore, sched) as T
             modelClass.isAssignableFrom(CalendarViewModel::class.java) ->
                 CalendarViewModel(repo, app.settingsStore) as T
             modelClass.isAssignableFrom(CourseListViewModel::class.java) ->
@@ -54,9 +54,9 @@ class AppViewModelFactory(
             modelClass.isAssignableFrom(LoginViewModel::class.java) ->
                 LoginViewModel(app.accountStore, app.sessionStore) as T
             modelClass.isAssignableFrom(TaskDetailViewModel::class.java) ->
-                TaskDetailViewModel(repo, handle) as T
+                TaskDetailViewModel(repo, sched, handle) as T
             modelClass.isAssignableFrom(QuickTaskViewModel::class.java) ->
-                QuickTaskViewModel(repo) as T
+                QuickTaskViewModel(repo, sched) as T
             else -> throw IllegalArgumentException("Unknown VM ${modelClass.name}")
         }
     }

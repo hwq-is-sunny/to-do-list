@@ -63,6 +63,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -281,6 +282,20 @@ fun SettingsScreen(
                                 vm.setTaskReminderEnabled(false)
                             }
                         }
+                    )
+                    GroupDivider()
+                    SettingsSwitchRow(
+                        title = stringResource(R.string.settings_deadline_vibrate),
+                        subtitle = stringResource(R.string.settings_deadline_vibrate_hint),
+                        checked = state.settings.deadlineVibrateEnabled,
+                        onCheckedChange = vm::setDeadlineVibrateEnabled
+                    )
+                    GroupDivider()
+                    SettingsSwitchRow(
+                        title = stringResource(R.string.settings_deadline_strong),
+                        subtitle = stringResource(R.string.settings_deadline_strong_hint),
+                        checked = state.settings.deadlineStrongReminderEnabled,
+                        onCheckedChange = vm::setDeadlineStrongReminderEnabled
                     )
                     GroupDivider()
                     SettingsArrowRow(
@@ -552,7 +567,13 @@ private fun AiConfigDialog(
                 Text("取消")
             }
         },
-        title = { Text("智能规划") },
+        title = {
+            Text(
+                text = "智能规划",
+                maxLines = 1,
+                softWrap = false
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
@@ -826,7 +847,10 @@ private fun TopFeatureChip(
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            softWrap = false,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
@@ -866,6 +890,9 @@ private fun SettingsArrowRow(
             text = title,
             color = Color(0xFFECF1FF),
             fontSize = 16.sp,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
         trailingText?.let {

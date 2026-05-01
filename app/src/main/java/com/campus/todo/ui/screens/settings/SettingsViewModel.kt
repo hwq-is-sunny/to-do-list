@@ -69,6 +69,20 @@ class SettingsViewModel(
         }
     }
 
+    fun setDeadlineVibrateEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsStore.setDeadlineVibrateEnabled(enabled)
+            scheduler.refreshNotificationChannels()
+        }
+    }
+
+    fun setDeadlineStrongReminderEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsStore.setDeadlineStrongReminderEnabled(enabled)
+            scheduler.refreshNotificationChannels()
+        }
+    }
+
     fun setTomatoFocusEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsStore.setTomatoFocusEnabled(enabled)

@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,6 +65,10 @@ import java.time.ZoneId
 import java.time.format.TextStyle
 import java.time.temporal.WeekFields
 import java.util.Locale
+
+private val CalendarMenuContainerColor = Color(0xFF131B2E)
+private val CalendarMenuTextColor = Color(0xFFF2F5FC)
+private val CalendarMenuBorderColor = Color(0x24FFFFFF)
 
 @Composable
 fun CalendarScreen(
@@ -203,42 +208,59 @@ private fun CalendarHeader(
                         modifier = Modifier.size(20.dp)
                     )
                 }
-                DropdownMenu(
-                    expanded = menuExpanded,
-                    onDismissRequest = onDismissMenu,
-                    offset = DpOffset(x = 6.dp, y = 8.dp),
-                    modifier = Modifier.width(136.dp)
+                MaterialTheme(
+                    colorScheme = MaterialTheme.colorScheme.copy(
+                        surface = CalendarMenuContainerColor
+                    )
                 ) {
-                    DropdownMenuItem(
-                        text = { MenuActionText("筛选") },
-                        onClick = { onMenuAction(CalendarMenuAction.FILTER) },
-                        colors = MenuDefaults.itemColors(
-                            textColor = Color(0xFFEAF0FF),
-                            leadingIconColor = Color(0xFFEAF0FF),
-                            trailingIconColor = Color(0xFFEAF0FF)
-                        ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
-                    )
-                    DropdownMenuItem(
-                        text = { MenuActionText("排序") },
-                        onClick = { onMenuAction(CalendarMenuAction.SORT) },
-                        colors = MenuDefaults.itemColors(
-                            textColor = Color(0xFFEAF0FF),
-                            leadingIconColor = Color(0xFFEAF0FF),
-                            trailingIconColor = Color(0xFFEAF0FF)
-                        ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
-                    )
-                    DropdownMenuItem(
-                        text = { MenuActionText("切换视图") },
-                        onClick = { onMenuAction(CalendarMenuAction.TOGGLE_VIEW) },
-                        colors = MenuDefaults.itemColors(
-                            textColor = Color(0xFFEAF0FF),
-                            leadingIconColor = Color(0xFFEAF0FF),
-                            trailingIconColor = Color(0xFFEAF0FF)
-                        ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
-                    )
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = onDismissMenu,
+                        offset = DpOffset(x = 6.dp, y = 8.dp),
+                        modifier = Modifier
+                            .width(136.dp)
+                            .border(1.dp, CalendarMenuBorderColor, RoundedCornerShape(12.dp))
+                    ) {
+                        DropdownMenuItem(
+                            text = { MenuActionText("筛选") },
+                            onClick = { onMenuAction(CalendarMenuAction.FILTER) },
+                            colors = MenuDefaults.itemColors(
+                                textColor = CalendarMenuTextColor,
+                                leadingIconColor = CalendarMenuTextColor,
+                                trailingIconColor = CalendarMenuTextColor,
+                                disabledTextColor = CalendarMenuTextColor,
+                                disabledLeadingIconColor = CalendarMenuTextColor,
+                                disabledTrailingIconColor = CalendarMenuTextColor
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                        )
+                        DropdownMenuItem(
+                            text = { MenuActionText("排序") },
+                            onClick = { onMenuAction(CalendarMenuAction.SORT) },
+                            colors = MenuDefaults.itemColors(
+                                textColor = CalendarMenuTextColor,
+                                leadingIconColor = CalendarMenuTextColor,
+                                trailingIconColor = CalendarMenuTextColor,
+                                disabledTextColor = CalendarMenuTextColor,
+                                disabledLeadingIconColor = CalendarMenuTextColor,
+                                disabledTrailingIconColor = CalendarMenuTextColor
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                        )
+                        DropdownMenuItem(
+                            text = { MenuActionText("切换视图") },
+                            onClick = { onMenuAction(CalendarMenuAction.TOGGLE_VIEW) },
+                            colors = MenuDefaults.itemColors(
+                                textColor = CalendarMenuTextColor,
+                                leadingIconColor = CalendarMenuTextColor,
+                                trailingIconColor = CalendarMenuTextColor,
+                                disabledTextColor = CalendarMenuTextColor,
+                                disabledLeadingIconColor = CalendarMenuTextColor,
+                                disabledTrailingIconColor = CalendarMenuTextColor
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                        )
+                    }
                 }
             }
         }
@@ -286,7 +308,7 @@ private fun MonthSwitchIcon(
 private fun MenuActionText(text: String) {
     Text(
         text = text,
-        color = Color(0xFFEAF0FF),
+        color = CalendarMenuTextColor,
         fontSize = 14.sp,
         fontWeight = FontWeight.Medium
     )
