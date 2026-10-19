@@ -198,43 +198,41 @@ object NoticeParser {
 
         parseWeekDate(text, "本", today)?.let { return it.toEpochDay() }
         parseWeekDate(text, "下", today)?.let { return it.toEpochDay() }
-        parseWeekdayToken(text, today)?.let { return it.toEpochDay() }
 
         val iso = isoPattern.matcher(text)
         if (iso.find()) {
-            val d = LocalDate.parse(iso.group(1))
-            return d.toEpochDay()
+            return runCatching { LocalDate.parse(iso.group(1)) }.getOrNull()?.toEpochDay()
         }
         val ymd = ymdPattern.matcher(text)
         if (ymd.find()) {
-            val y = ymd.group(1).toInt()
-            val mo = ymd.group(2).toInt()
-            val day = ymd.group(3).toInt()
-            return LocalDate.of(y, mo, day).toEpochDay()
+            val year = ymd.group(1).toIntOrNull() ?: return null
+            val month = ymd.group(2).toIntOrNull() ?: return null
+            val day = ymd.group(3).toIntOrNull() ?: return null
+            return runCatching { LocalDate.of(year, month, day) }.getOrNull()?.toEpochDay()
         }
         val md = mdPattern.matcher(text)
         if (md.find()) {
-            val mo = md.group(1).toInt()
-            val day = md.group(2).toInt()
-            var y = today.year
-            var candidate = LocalDate.of(y, mo, day)
-            if (candidate.isBefore(today.minusDays(60))) {
-                y += 1
-                candidate = LocalDate.of(y, mo, day)
-            }
-            return candidate.toEpochDay()
+            val month = md.group(1).toIntOrNull() ?: return null
+            val day = md.group(2).toIntOrNull() ?: return null
+            return runCatching {
+                var candidate = LocalDate.of(today.year, month, day)
+                if (candidate.isBefore(today.minusDays(60))) {
+                    candidate = LocalDate.of(today.year + 1, month, day)
+                }
+                candidate.toEpochDay()
+            }.getOrNull()
         }
-        val sl = slashMdPattern.matcher(text)
-        if (sl.find()) {
-            val mo = sl.group(1).toInt()
-            val day = sl.group(2).toInt()
-            var y = today.year
-            var candidate = LocalDate.of(y, mo, day)
-            if (candidate.isBefore(today.minusDays(60))) {
-                y += 1
-                candidate = LocalDate.of(y, mo, day)
-            }
-            return candidate.toEpochDay()
+        val slash = slashMdPattern.matcher(text)
+        if (slash.find()) {
+            val month = slash.group(1).toIntOrNull() ?: return null
+            val day = slash.group(2).toIntOrNull() ?: return null
+            return runCatching {
+                var candidate = LocalDate.of(today.year, month, day)
+                if (candidate.isBefore(today.minusDays(60))) {
+                    candidate = LocalDate.of(today.year + 1, month, day)
+                }
+                candidate.toEpochDay()
+            }.getOrNull()
         }
         return null
     }
@@ -272,30 +270,37 @@ object NoticeParser {
 
     private fun parseTimeRange(text: String): TimeParse? {
         val isBefore = Regex("(前|之前)").containsMatchIn(text)
-        val tr = timeRangePattern.matcher(text)
-        if (tr.find()) {
-            val h1 = tr.group(1).toInt()
-            val m1 = tr.group(2).toInt()
-            val h2 = tr.group(3).toInt()
-            val m2 = tr.group(4).toInt()
-            return TimeParse(h1 * 60 + m1, h2 * 60 + m2, false)
+        val range = timeRangePattern.matcher(text)
+        if (range.find()) {
+            val startHour = range.group(1).toIntOrNull() ?: return null
+            val startMinute = range.group(2).toIntOrNull() ?: return null
+            val endHour = range.group(3).toIntOrNull() ?: return null
+            val endMinute = range.group(4).toIntOrNull() ?: return null
+            if (startHour !in 0..23 || endHour !in 0..23 ||
+                startMinute !in 0..59 || endMinute !in 0..59
+            ) return null
+            val start = startHour * 60 + startMinute
+            val end = endHour * 60 + endMinute
+            if (end <= start) return null
+            return TimeParse(start, end, false)
         }
         val hm = hmPattern.matcher(text)
         if (hm.find()) {
-            val h = hm.group(1).toInt()
-            val m = hm.group(2).toInt()
-            val minute = h * 60 + m
-            return TimeParse(minute, null, isBefore)
+            val hour = hm.group(1).toIntOrNull() ?: return null
+            val minute = hm.group(2).toIntOrNull() ?: return null
+            if (hour !in 0..23 || minute !in 0..59) return null
+            return TimeParse(hour * 60 + minute, null, isBefore)
         }
-        parseChineseColloquialTime(text)?.let { (h, m) ->
-            return TimeParse(h * 60 + m, null, isBefore)
+        parseChineseColloquialTime(text)?.let { (hour, minute) ->
+            return TimeParse(hour * 60 + minute, null, isBefore)
         }
-        val pm = periodPattern.matcher(text)
-        if (pm.find()) {
-            val a = pm.group(1).toInt()
-            val b = pm.group(2).toInt()
-            val (s, e) = periodsToMinutes(a, b)
-            return TimeParse(s, e, false)
+        val period = periodPattern.matcher(text)
+        if (period.find()) {
+            val startPeriod = period.group(1).toIntOrNull() ?: return null
+            val endPeriod = period.group(2).toIntOrNull() ?: return null
+            if (startPeriod !in 1..14 || endPeriod !in startPeriod..14) return null
+            val (start, end) = periodsToMinutes(startPeriod, endPeriod)
+            return TimeParse(start, end, false)
         }
         return null
     }

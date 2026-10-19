@@ -1,188 +1,135 @@
-# 📚 校园待办 TodoList（Android）
+# CampusTodo — AI-Assisted Campus Task Manager
 
-一个基于 **Android + Kotlin + Jetpack Compose** 开发的校园待办管理应用，面向大学生日常学习生活场景，帮助用户更高效地管理 **课程、任务、日程与提醒**。
+[![Android CI](https://github.com/hwq-is-sunny/to-do-list/actions/workflows/android-ci.yml/badge.svg?branch=improve%2Fai-security-readme)](https://github.com/hwq-is-sunny/to-do-list/actions/workflows/android-ci.yml)
 
----
+CampusTodo is a portfolio project focused on converting unstructured campus notices into reviewable tasks, while keeping local-first task and timetable management usable without an AI provider.
 
-## ✨ 项目简介
+CampusTodo is an Android app for organizing university coursework, schedules, and reminders. It combines local rule-based parsing with optional LLM assistance to turn unstructured campus notices into reviewable task candidates.
 
-本项目是一款运行在安卓平台上的 TodoList 软件，结合校园使用场景，对传统待办应用进行了适配与扩展。  
-除了基础的任务管理功能外，还加入了 **课程管理、日历查看、候选箱导入、提醒通知、本地数据存储** 等模块，适合用于学习任务整理、课程安排记录以及日常计划管理。
+> **Project status:** undergraduate prototype. The repository describes the implementation as it exists today; security controls in a client application are defense-in-depth, not a substitute for a trusted backend.
 
----
+## Core capabilities
 
-## 🚀 项目亮点
+- **Task management:** create, update, complete, and delete tasks.
+- **Course and timetable management:** store courses and weekly class slots.
+- **Calendar and reminders:** review upcoming tasks and schedule local notifications.
+- **Candidate inbox:** preserve imported text, parse it into a draft, and let the user confirm before creating a task.
+- **Rule-based notice parsing:** extract likely task titles, dates, times, locations, categories, and priority hints from Chinese campus notices.
+- **Duplicate suggestions:** score candidate tasks using title, course, and due-time similarity before suggesting a merge.
+- **Optional AI assistance:** call a compatible chat-completions endpoint to parse notices or structure timetable OCR text.
+- **Timetable OCR support:** use ML Kit text recognition and optional LLM structuring to help convert a timetable image into rows for review.
 
-- ✅ 基于 **Jetpack Compose** 构建现代化 UI
-- ✅ 使用 **Room** 实现本地数据库存储
-- ✅ 支持 **任务管理 / 课程管理 / 日历查看**
-- ✅ 支持 **候选箱导入**，可将文本内容转为待处理任务
-- ✅ 支持 **任务提醒通知**
-- ✅ 使用 **DataStore** 保存本地会话信息
-- ✅ 页面风格统一，采用深色主题与卡片式布局
-- ✅ 预留 **AI 辅助解析** 能力，便于后续拓展智能规划功能
+## Screenshots
 
----
+The repository includes screenshots of the main user flows:
 
-## 🧩 主要功能
+| Today / tasks | Calendar | Courses / timetable |
+|---|---|---|
+| ![待办页](ui-screens/代办页.JPG) | ![日历页](ui-screens/日历页.jpg) | ![课表页](ui-screens/课表页.jpg) |
 
-### 1. 🏠今日待办首页
-- 展示当天待办任务总览
-- 展示任务完成情况与进行中状态
-- 展示优先任务和全部任务列表
-- 支持点击进入详情页
-- 支持快速新增任务
+| Login | Settings |
+|---|---|
+| ![登录页](ui-screens/登录页.jpg) | ![设置页](ui-screens/设置页.jpg) |
 
-### 2. 🗓️日历视图
-- 以日期维度查看任务与课程安排
-- 支持切换未来 7 天日期
-- 按天展示课程与任务时间分布
+## Architecture at a glance
 
-### 3. 📖课程管理
-- 支持新增课程
-- 支持编辑课程信息
-- 支持删除课程
-- 支持查看课程详情及相关安排
+```text
+Compose UI
+   |
+ViewModel / UI state
+   |
+Repository
+   |-----------------------|
+Room / SQLite          Domain parsing
+                           |
+                  Rule-based notice parser
+                           |
+                    Candidate draft
+                           |
+                 Duplicate-score suggestion
+                           |
+                 User review and confirmation
 
-### 4. 📥候选箱
-- 用于接收待整理内容
-- 可将原始文本导入候选箱
-- 支持二次确认后生成正式任务
-- 适合处理通知、课程消息、作业文本等内容
-
-### 5. 🔔任务提醒
-- 支持任务提醒调度
-- 支持开机后恢复提醒
-- 便于重要任务按时完成
-
-### 6. ⚙️设置模块
-- 支持基础设置管理
-- 支持用户退出登录
-- 为后续主题、提醒、同步等功能扩展预留空间
-
-### 7. 🤖AI 解析预留
-- 项目中已预留 `DeepSeek` 接口调用逻辑
-- 后续可实现将通知/文本自动解析为任务信息
-- 当前适合作为后续功能扩展方向
-
----
-
-## 🛠️ 技术栈
-
-- **开发语言**：Kotlin
-- **UI 框架**：Jetpack Compose
-- **架构模式**：ViewModel + Repository
-- **本地数据库**：Room
-- **本地存储**：DataStore
-- **异步处理**：Kotlin Coroutines / Flow
-- **通知调度**：WorkManager
-- **网络请求**：OkHttp
-- **构建工具**：Gradle Kotlin DSL
-
----
-
-## 📂 项目结构
-
-```bash
-app/src/main/java/com/campus/todo
-├── data                 # 数据层（数据库、实体类、DAO、仓库）
-├── domain               # 业务解析逻辑
-├── network              # 网络请求与 AI 接口
-├── notification         # 通知与提醒模块
-├── share                # 分享导入相关逻辑
-├── ui                   # UI 层（页面、组件、导航、主题）
-├── util                 # 工具类
-├── MainActivity.kt      # 应用入口
-└── CampusTodoApp.kt     # Application 初始化
+Optional AI path:
+Input validation -> LLM request -> output validation -> reviewable draft
 ```
 
+The LLM output is treated as a suggestion, not as an instruction to perform an action. The user remains in the confirmation loop before a parsed candidate becomes a task.
 
-## 🔧 安装与运行
+## Technology stack
 
-### 1. 克隆项目
+| Area | Technology |
+|---|---|
+| Language | Kotlin |
+| UI | Android, Jetpack Compose, Material 3 |
+| Architecture | ViewModel + Repository |
+| Local database | Room / SQLite |
+| Preferences | Preferences DataStore |
+| Async work | Kotlin Coroutines / Flow |
+| Reminders | WorkManager and Android notifications |
+| HTTP | OkHttp |
+| OCR | Google ML Kit Chinese text recognition |
+| AI integration | Configurable chat-completions API |
 
-    git clone https://github.com/hwq-is-sunny/to-do-list.git
-    cd to-do-list
+Build configuration currently uses **Android Gradle Plugin 8.2.2**, **Gradle 8.2.1**, **Kotlin 1.8.22**, **Java/JVM target 17**, **compile SDK 34**, and **minimum SDK 26**. The wrapper version is aligned with the AGP 8.2 generation and the Foojay toolchain resolver used in settings. Use Android SDK Platform 34 and JDK 17 for this project configuration.
 
-### 2. 使用 Android Studio 打开项目
+## Run locally
 
-打开 **Android Studio**，选择 **Open**，然后打开当前项目根目录。  
-等待 **Gradle** 同步完成。
+1. Install JDK 17 and Android Studio with Android SDK Platform 34.
+2. Clone the repository:
+   ```bash
+   git clone https://github.com/hwq-is-sunny/to-do-list.git
+   cd to-do-list
+   ```
+3. Open the project root in Android Studio and allow Gradle sync to finish.
+4. Run the app on an Android device or emulator.
+5. If you want to use AI features, configure the provider URL, model, and a **test API key** in the app's AI settings. AI features can be left disabled if no key is configured.
 
-### 3. 配置 AI Key（可选）
+Do **not** commit `local.properties`, API keys, access tokens, or other credentials.
 
-如果你需要测试 AI 解析功能，请在项目根目录下的 `local.properties` 文件中添加：
+## Security notes
 
-    DEEPSEEK_API_KEY=你的密钥
+This branch adds client-side validation around the optional LLM path:
 
-如果不使用 AI 功能，这一步可以跳过。
+- Limit the size of imported notice and OCR text before sending it to a model.
+- Use heuristic checks for a small set of high-confidence prompt-injection phrases.
+- Tell the model to treat imported content as untrusted data, not as instructions.
+- Validate structured task fields, enum values, dates, times, and confidence values before creating a suggestion.
+- Validate the expected five-column format of AI-structured timetable rows.
+- Avoid baking a provider API key into `BuildConfig` or the APK.
 
-### 4. 配置运行环境
+**Limitations:** phrase matching is heuristic and can be bypassed or produce false positives. Client-side checks do not create a trustworthy security boundary. The API key is encrypted at rest with AES-GCM using an Android Keystore key. The app disables Android backup entirely to avoid exporting local credentials; this also means local tasks and settings are not backed up automatically. Do not use a valuable production key or send sensitive data through this prototype. The app uses local-only demo accounts and does not provide server-side authentication or multi-device account isolation. A production deployment should route model calls through an authenticated backend, keep provider credentials server-side, apply server-side rate limits, minimize logs, and define a data-retention policy.
 
-请确保你的开发环境满足以下要求：
+## Quality checks
 
-- Android Studio 最新稳定版
-- JDK 17
-- Android SDK 35
-- 最低支持版本：Android 8.0（API 26）
+The GitHub Actions workflow runs on pushes to main and pull requests targeting main:
 
-### 5. 运行项目
+- ./gradlew testDebugUnitTest — unit tests for AI input/output validation, password hashing and legacy-hash upgrade detection, notice date/time parsing, and duplicate-task scoring.
+- ./gradlew lintDebug — Android static analysis.
+- ./gradlew assembleDebug and ./gradlew assembleRelease — compile and package both build variants.
+- Uploads the debug APK and test/lint reports as workflow artifacts.
 
-连接安卓真机或启动模拟器后，点击 Android Studio 顶部的 **Run** 按钮即可启动项目。
+Download the latest debug APK from the Artifacts section of a successful [Actions run](https://github.com/hwq-is-sunny/to-do-list/actions). This is a debug build for demonstration, not a Play Store release.
 
-### 6. 打包 APK（可选）
+## Implemented vs. future work
 
-如果你想生成安装包，可以在 Android Studio 中选择：
+Implemented in the current codebase:
+- local task/course/timetable persistence;
+- candidate import and confirmation flow;
+- local notice parsing and duplicate suggestions;
+- reminder scheduling;
+- optional LLM-based notice parsing and timetable structuring;
+- client-side validation for LLM inputs and outputs.
 
-- `Build > Build APK(s)`
+Not implemented by this repository:
+- a production AI gateway/backend;
+- server-side authentication, quotas, or rate limiting;
+- a production-grade encrypted credential store;
+- a comprehensive prompt-injection defense;
+- formal security testing or an independent security audit.
 
-生成完成后即可在输出目录中找到 APK 文件。
+## Project links
 
----
+- Repository: https://github.com/hwq-is-sunny/to-do-list
 
-## 📌 当前实现情况
-
-### 已实现
-- [x] Jetpack Compose 页面搭建
-- [x] 本地数据库存储
-- [x] 今日待办展示
-- [x] 日历任务查看
-- [x] 课程管理
-- [x] 候选箱导入与确认
-- [x] 提醒通知基础能力
-- [x] 设置页基础功能
-- [x] 番茄专注功能
-- [x] 更完整的 AI 智能规划
-
-### 可继续优化
-- [ ] 完整登录注册逻辑
-- [ ] 搜索与筛选
-- [ ] 更多任务分类标签
-- [ ] 统计分析功能
-
-
-
----
-
-## 🎨 UI 设计风格
-
-本项目整体采用：
-
-- 深色背景风格
-- 圆角卡片式布局
-- 偏年轻化、轻量化、现代化的视觉表达
-
----
-
-
-## 📄 License
-
-本项目仅用于学习、交流与个人作品展示。  
-
----
-
-## 🌟 总结
-
-
-
-如果你觉得这个项目不错，欢迎点个 **Star ⭐**    ^^_
+This is a learning and portfolio project. Verify the current source and test results before relying on any feature or security claim.

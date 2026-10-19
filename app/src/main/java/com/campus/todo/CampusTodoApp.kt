@@ -15,10 +15,10 @@ import com.campus.todo.notification.TaskReminderScheduler
 import com.campus.todo.notification.TodoNotificationChannels
 import kotlinx.coroutines.runBlocking
 import com.campus.todo.data.settings.AppLanguage
-import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import java.util.Locale
 
 class CampusTodoApp : Application() {
 
@@ -32,12 +32,13 @@ class CampusTodoApp : Application() {
     val sessionStore: SessionStore by lazy { SessionStore(this) }
     val accountStore: AccountStore by lazy { AccountStore(this) }
     val deepSeekAssist: DeepSeekAssist by lazy {
-        DeepSeekAssist(this, settingsStore, com.campus.todo.BuildConfig.DEEPSEEK_API_KEY)
+        DeepSeekAssist(this, settingsStore)
     }
 
     override fun onCreate() {
         super.onCreate()
         val settings = runBlocking {
+            settingsStore.migrateLegacyAiApiKey()
             val current = settingsStore.currentSettings()
             if (current.languageTag.isBlank() ||
                 AppLanguage.fromTag(current.languageTag) == AppLanguage.ENGLISH

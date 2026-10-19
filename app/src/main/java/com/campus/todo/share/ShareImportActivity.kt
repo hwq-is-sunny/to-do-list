@@ -29,11 +29,17 @@ import kotlinx.coroutines.launch
 
 class ShareImportActivity : ComponentActivity() {
 
+    private companion object {
+        const val MAX_SHARED_TEXT_CHARS = 12_000
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val app = application as CampusTodoApp
-        val raw = intent?.getStringExtra(Intent.EXTRA_TEXT)?.trim().orEmpty()
+        val incomingText = intent?.getStringExtra(Intent.EXTRA_TEXT)?.trim().orEmpty()
+        val raw = incomingText.take(MAX_SHARED_TEXT_CHARS)
+        val wasTruncated = incomingText.length > raw.length
 
         setContent {
             CampusTodoTheme {
@@ -53,6 +59,12 @@ class ShareImportActivity : ComponentActivity() {
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (wasTruncated) {
+                        Text(
+                            "分享内容超过 $MAX_SHARED_TEXT_CHARS 个字符，已截断以保护应用稳定性。",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                     OutlinedTextField(
                         value = preview,
                         onValueChange = {},

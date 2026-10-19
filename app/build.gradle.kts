@@ -1,17 +1,8 @@
-import java.util.Properties
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
 }
-
-val localProperties = Properties().apply {
-    val f = rootProject.file("local.properties")
-    if (f.exists()) f.inputStream().use { load(it) }
-}
-val deepseekKeyProp = localProperties.getProperty("DEEPSEEK_API_KEY").orEmpty()
 
 android {
     namespace = "com.campus.todo"
@@ -23,11 +14,6 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0-mvp"
-        buildConfigField(
-            "String",
-            "DEEPSEEK_API_KEY",
-            "\"${deepseekKeyProp.replace("\\", "\\\\").replace("\"", "\\\"")}\""
-        )
     }
 
     buildTypes {
@@ -40,10 +26,10 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "11" }
+    kotlinOptions { jvmTarget = "17" }
     buildFeatures {
         compose = true
         buildConfig = true
@@ -51,7 +37,7 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.8"
     }
-    packagingOptions {
+    packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
@@ -59,7 +45,7 @@ android {
 }
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(17)
 }
 
 dependencies {
@@ -86,8 +72,7 @@ dependencies {
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.compose.foundation:foundation")
-}
 
-tasks.withType<KotlinCompile>().configureEach {
-    kotlinOptions.jvmTarget = "11"
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }
