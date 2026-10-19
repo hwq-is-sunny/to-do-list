@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.campus.todo.CampusTodoApp
@@ -57,12 +56,11 @@ class CandidateDraftReminderWorker(
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()
 
-        runCatching {
-            NotificationManagerCompat.from(applicationContext).notify(
-                NOTIF_BASE_ID + (candidateId % 1_000_000).toInt(),
-                notif
-            )
-        }
+        SafeNotificationManager.notifyIfAllowed(
+            applicationContext,
+            NOTIF_BASE_ID + (candidateId % 1_000_000).toInt(),
+            notif
+        )
         return Result.success()
     }
 
