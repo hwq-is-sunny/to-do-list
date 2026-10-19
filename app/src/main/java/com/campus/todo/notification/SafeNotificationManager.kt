@@ -6,7 +6,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
-import androidx.annotation.SuppressLint
+import android.annotation.SuppressLint
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 
