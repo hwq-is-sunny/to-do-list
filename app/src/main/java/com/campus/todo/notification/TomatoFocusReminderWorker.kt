@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.campus.todo.CampusTodoApp
@@ -48,9 +47,7 @@ class TomatoFocusReminderWorker(
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()
 
-        runCatching {
-            NotificationManagerCompat.from(applicationContext).notify(9051, notif)
-        }
+        SafeNotificationManager.notifyIfAllowed(applicationContext, 9051, notif)
         return Result.success()
     }
 }

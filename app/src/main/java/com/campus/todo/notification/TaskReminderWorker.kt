@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.campus.todo.CampusTodoApp
@@ -77,12 +76,11 @@ class TaskReminderWorker(
             builder.setCategory(NotificationCompat.CATEGORY_ALARM)
         }
 
-        runCatching {
-            NotificationManagerCompat.from(applicationContext).notify(
-                notificationId(taskId, phase),
-                builder.build()
-            )
-        }
+        SafeNotificationManager.notifyIfAllowed(
+            applicationContext,
+            notificationId(taskId, phase),
+            builder.build()
+        )
         return Result.success()
     }
 

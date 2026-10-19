@@ -13,3 +13,11 @@ captures/
 .cxx/
 jdk-17.exe
 jdk-17.msi
+# Local signing material and environment secrets
+*.jks
+*.keystore
+*.p12
+*.pem
+.env
+.env.*
+secrets.properties

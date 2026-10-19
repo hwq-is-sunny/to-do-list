@@ -550,7 +550,7 @@ private fun AiConfigDialog(
     var timeoutText by remember(currentTimeoutSeconds) { mutableStateOf(currentTimeoutSeconds.toString()) }
     var showApiKey by remember { mutableStateOf(false) }
     val timeout = timeoutText.toIntOrNull()?.coerceIn(10, 120) ?: 45
-    val canSave = if (!enabled) true else baseUrl.startsWith("http") && model.isNotBlank()
+    val canSave = if (!enabled) true else baseUrl.trim().startsWith("https://", ignoreCase = true) && model.isNotBlank()
 
     AlertDialog(
         onDismissRequest = onDismiss,

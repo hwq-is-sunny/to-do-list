@@ -88,6 +88,8 @@ data class AppSettings(
 
 class SettingsStore(private val context: Context) {
 
+    private val apiKeyCipher = ApiKeyCipher()
+
     private val keyNickname = stringPreferencesKey("nickname")
     private val keyLanguageTag = stringPreferencesKey("language_tag")
     private val keyNotificationsEnabled = booleanPreferencesKey("notifications_enabled")
@@ -132,7 +134,7 @@ class SettingsStore(private val context: Context) {
             ringtoneUri = prefs[keyRingtoneUri].orEmpty(),
             llmProvider = prefs[keyLlmProvider].orEmpty().ifBlank { LlmProvider.DEEPSEEK.name },
             aiBaseUrl = prefs[keyAiBaseUrl]?.trim().orEmpty().ifBlank { AppSettings.DEFAULT_AI_BASE_URL },
-            aiApiKey = prefs[keyAiApiKey].orEmpty(),
+            aiApiKey = apiKeyCipher.decryptOrEmpty(prefs[keyAiApiKey].orEmpty()),
             aiModel = prefs[keyAiModel]?.trim().orEmpty().ifBlank { AppSettings.DEFAULT_AI_MODEL },
             aiTimeoutSeconds = (prefs[keyAiTimeoutSeconds] ?: 45).coerceIn(10, 120),
             defaultReminderMinutes = sanitizeInterval(prefs[keyDefaultReminderMinutes] ?: 30),
@@ -145,6 +147,17 @@ class SettingsStore(private val context: Context) {
     }
 
     suspend fun currentSettings(): AppSettings = settingsFlow.first()
+
+    /** Encrypts API keys saved by earlier versions, if present. */
+    suspend fun migrateLegacyAiApiKey() {
+        context.settingsDataStore.edit { prefs ->
+            val stored = prefs[keyAiApiKey].orEmpty()
+            if (stored.isNotBlank() && !apiKeyCipher.isEncrypted(stored)) {
+                // Never leave a legacy key in plaintext if encryption fails.
+                prefs[keyAiApiKey] = runCatching { apiKeyCipher.encrypt(stored) }.getOrNull().orEmpty()
+            }
+        }
+    }
 
     suspend fun setLanguageTag(languageTag: String) {
         val normalized = languageTag.trim().ifBlank { AppLanguage.CHINESE.tag }
@@ -215,7 +228,7 @@ class SettingsStore(private val context: Context) {
     suspend fun updateAiConfig(baseUrl: String, apiKey: String, model: String) {
         context.settingsDataStore.edit { prefs ->
             prefs[keyAiBaseUrl] = baseUrl.trim().ifBlank { AppSettings.DEFAULT_AI_BASE_URL }
-            prefs[keyAiApiKey] = apiKey.trim()
+            prefs[keyAiApiKey] = apiKeyCipher.encrypt(apiKey.trim())
             prefs[keyAiModel] = model.trim().ifBlank { AppSettings.DEFAULT_AI_MODEL }
         }
     }
@@ -232,7 +245,7 @@ class SettingsStore(private val context: Context) {
             prefs[keyAiParseEnabled] = enabled
             prefs[keyLlmProvider] = provider.name
             prefs[keyAiBaseUrl] = baseUrl.trim().ifBlank { AppSettings.DEFAULT_AI_BASE_URL }
-            prefs[keyAiApiKey] = apiKey.trim()
+            prefs[keyAiApiKey] = apiKeyCipher.encrypt(apiKey.trim())
             prefs[keyAiModel] = model.trim().ifBlank { AppSettings.DEFAULT_AI_MODEL }
             prefs[keyAiTimeoutSeconds] = timeoutSeconds.coerceIn(10, 120)
         }

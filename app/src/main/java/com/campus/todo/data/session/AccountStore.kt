@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import java.security.MessageDigest
 import java.security.SecureRandom
 import kotlinx.coroutines.flow.first
 import org.json.JSONArray
@@ -19,6 +18,7 @@ class AccountStore(private val context: Context) {
     sealed class RegisterResult {
         object Success : RegisterResult()
         object Exists : RegisterResult()
+        object InvalidPassword : RegisterResult()
     }
 
     sealed class LoginResult {
@@ -29,8 +29,8 @@ class AccountStore(private val context: Context) {
 
     suspend fun register(username: String, password: String): RegisterResult {
         val name = username.trim()
-        val pwd = password.trim()
-        if (name.isBlank() || pwd.isBlank()) return RegisterResult.Exists
+        if (name.isBlank() || password.length < 8) return RegisterResult.InvalidPassword
+
         var result: RegisterResult = RegisterResult.Success
         context.accountDataStore.edit { prefs ->
             val accounts = parseAccounts(prefs[keyAccounts].orEmpty())
@@ -39,9 +39,8 @@ class AccountStore(private val context: Context) {
                 return@edit
             }
             val salt = randomSaltHex()
-            val createdAt = System.currentTimeMillis()
-            val hash = sha256Hex("$salt:$pwd")
-            val updated = accounts + LocalAccount(name, salt, hash, createdAt)
+            val hash = PasswordHasher.hash(password, salt)
+            val updated = accounts + LocalAccount(name, salt, hash, System.currentTimeMillis())
             prefs[keyAccounts] = toJson(updated)
             result = RegisterResult.Success
         }
@@ -50,15 +49,46 @@ class AccountStore(private val context: Context) {
 
     suspend fun verifyLogin(username: String, password: String): LoginResult {
         val name = username.trim()
-        val pwd = password.trim()
-        if (name.isBlank() || pwd.isBlank()) return LoginResult.AccountNotFound
-        val data = context.accountDataStore.data.first()
-        val account = parseAccounts(data[keyAccounts].orEmpty())
-            .firstOrNull { it.username.equals(name, ignoreCase = true) }
-        return when {
-            account == null -> LoginResult.AccountNotFound
-            account.passwordHash == sha256Hex("${account.salt}:$pwd") -> LoginResult.Success
-            else -> LoginResult.PasswordMismatch
+        if (name.isBlank() || password.isEmpty()) return LoginResult.AccountNotFound
+
+        val account = parseAccounts(
+            context.accountDataStore.data.first()[keyAccounts].orEmpty()
+        ).firstOrNull { it.username.equals(name, ignoreCase = true) }
+            ?: return LoginResult.AccountNotFound
+
+        val isLegacyHash = !account.passwordHash.startsWith("pbkdf2_sha256\$")
+        var verifiedPassword = password
+        var verification = PasswordHasher.verify(password, account.salt, account.passwordHash)
+        if (!verification.matches && isLegacyHash && password != password.trim()) {
+            // The original login flow trimmed passwords before hashing and verification.
+            verifiedPassword = password.trim()
+            verification = PasswordHasher.verify(verifiedPassword, account.salt, account.passwordHash)
+        }
+        if (!verification.matches) return LoginResult.PasswordMismatch
+
+        if (verification.needsUpgrade) {
+            upgradePasswordHash(account, verifiedPassword)
+        }
+        return LoginResult.Success
+    }
+
+    private suspend fun upgradePasswordHash(account: LocalAccount, password: String) {
+        context.accountDataStore.edit { prefs ->
+            val current = parseAccounts(prefs[keyAccounts].orEmpty())
+            val updated = current.map { item ->
+                if (item.username.equals(account.username, ignoreCase = true) &&
+                    item.passwordHash == account.passwordHash
+                ) {
+                    val newSalt = randomSaltHex()
+                    item.copy(
+                        salt = newSalt,
+                        passwordHash = PasswordHasher.hash(password, newSalt)
+                    )
+                } else {
+                    item
+                }
+            }
+            prefs[keyAccounts] = toJson(updated)
         }
     }
 
@@ -81,14 +111,7 @@ class AccountStore(private val context: Context) {
                     val hash = obj.optString("passwordHash").trim()
                     val createdAt = obj.optLong("createdAt", System.currentTimeMillis())
                     if (username.isNotBlank() && salt.isNotBlank() && hash.isNotBlank()) {
-                        add(
-                            LocalAccount(
-                                username = username,
-                                salt = salt,
-                                passwordHash = hash,
-                                createdAt = createdAt
-                            )
-                        )
+                        add(LocalAccount(username, salt, hash, createdAt))
                     }
                 }
             }
@@ -114,10 +137,5 @@ class AccountStore(private val context: Context) {
         val bytes = ByteArray(16)
         SecureRandom().nextBytes(bytes)
         return bytes.joinToString("") { "%02x".format(it) }
-    }
-
-    private fun sha256Hex(raw: String): String {
-        val digest = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray())
-        return digest.joinToString("") { "%02x".format(it) }
     }
 }
